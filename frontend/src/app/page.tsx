@@ -366,7 +366,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Registration failed.');
 
-        if (data.otpRequired) {
+        if (data.otpRequired || (data.user && !data.user.isVerified)) {
           setAuthScreen('otp');
           setOtpResendTimer(60);
           if (data.otp) {
