@@ -93,10 +93,13 @@ These endpoints manage user accounts, verification, and browser sessions. They l
   }
   ```
 * **Error Response (403 Forbidden - Unverified Account):**
+  Automatically regenerates and hashes a fresh 6-digit verification code, saving it in Mongoose and printing it directly to the server terminal console.
   ```json
   {
     "error": "Verification needed. Please verify your account using OTP before logging in.",
-    "verified": false
+    "verified": false,
+    "otpRequired": true,
+    "otp": "675796"
   }
   ```
 
