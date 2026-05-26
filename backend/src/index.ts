@@ -49,7 +49,8 @@ mongoose
         const newUser = new User({
           email: 'developer@omnimcp.local',
           passwordHash: hashPassword('developer123'),
-          apiKey: devApiKey
+          apiKey: devApiKey,
+          isVerified: true
         });
         await newUser.save();
         console.log('Seeded default developer tenant. API Key: omni_gt_developer_key_123456');
