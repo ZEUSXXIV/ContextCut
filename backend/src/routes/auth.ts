@@ -236,9 +236,19 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
     // If not verified, block login and signal verification needed
     if (!user.isVerified) {
+      // Automatically generate a new OTP to facilitate login verification
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.otpHash = hashPassword(otp);
+      user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+      await user.save();
+
+      console.log(`[Login OTP for ${email}]: ${otp}`);
+
       res.status(403).json({
         error: 'Verification needed. Please verify your account using OTP before logging in.',
         verified: false,
+        otpRequired: true,
+        otp, // Returned for testing purposes in standard sandbox flow
       });
       return;
     }
