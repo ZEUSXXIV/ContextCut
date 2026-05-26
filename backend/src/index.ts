@@ -13,6 +13,7 @@ dotenv.config();
 import authRoutes from './routes/auth';
 import apisRoutes from './routes/apis';
 import mcpRoutes from './routes/mcp';
+import analyticsRoutes from './routes/analytics';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/apis', apisRoutes);
 app.use('/api/gateways', apisRoutes);
 app.use('/api/mcp', mcpRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Database connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/omni-mcp-gateway';
