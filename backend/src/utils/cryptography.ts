@@ -1,4 +1,8 @@
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+// Load environment variables for consistent key derivation across tests and runtime
+dotenv.config();
 
 // Retrieve master key and fallback safely in development to ensure test resilience
 const MASTER_KEY_RAW = process.env.MASTER_ENCRYPTION_KEY || 'dev-safe-fallback-master-key-must-be-changed-in-production-123456';
