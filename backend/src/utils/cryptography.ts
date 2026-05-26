@@ -47,3 +47,27 @@ export function decrypt(encryptedData: string, ivHex: string, tagHex: string): s
 
   return decrypted;
 }
+
+/**
+ * Hashes a password securely using scrypt with a random salt.
+ */
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+/**
+ * Verifies a password against a stored scrypt salt/hash combo using timing-safe buffer matching.
+ */
+export function verifyPassword(password: string, storedValue: string): boolean {
+  try {
+    const parts = storedValue.split(':');
+    if (parts.length !== 2) return false;
+    const [salt, hash] = parts;
+    const checkHash = crypto.scryptSync(password, salt, 64).toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(checkHash, 'hex'));
+  } catch (err) {
+    return false;
+  }
+}
