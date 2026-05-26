@@ -308,6 +308,9 @@ export default function Dashboard() {
           if (res.status === 403 || (data.error && data.error.includes('verify'))) {
             setAuthScreen('otp');
             setOtpResendTimer(60);
+            if (data.otp) {
+              setDevOtpCode(data.otp);
+            }
             return;
           }
           throw new Error(data.error || 'Login failed.');
