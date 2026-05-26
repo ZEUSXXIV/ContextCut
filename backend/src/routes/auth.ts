@@ -63,6 +63,7 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({
       message: 'Registration successful. An OTP has been generated.',
+      otpRequired: true,
       user: {
         id: newUser._id,
         email: newUser.email,
