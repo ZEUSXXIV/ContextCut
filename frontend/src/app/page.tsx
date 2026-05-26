@@ -250,8 +250,9 @@ export default function Dashboard() {
         }
 
         const data = await res.json();
-        setGatewayName(data.title);
-        setAvailablePaths(data.paths);
+        const title = data.spec?.info?.title || data.title || 'Connected Gateway';
+        setGatewayName(title);
+        setAvailablePaths(data.paths || []);
         setWizardStep(2);
       } else {
         // Simulated validation for demo mode
@@ -322,7 +323,9 @@ export default function Dashboard() {
         }
 
         const data = await res.json();
-        setNewGatewayId(data.gateway.id);
+        const createdApi = data.connectedApi || data.gateway;
+        const newId = createdApi ? (createdApi._id || createdApi.id) : null;
+        setNewGatewayId(newId);
         fetchData();
       } else {
         // Simulated create
