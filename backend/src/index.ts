@@ -17,7 +17,7 @@ import mcpRoutes from './routes/mcp';
 import analyticsRoutes from './routes/analytics';
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.NODE_ENV === 'test' ? 0 : (process.env.PORT || 3001);
 
 // Global middleware
 app.use(cors({
