@@ -1,11 +1,32 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import { authenticateApiKey, AuthenticatedRequest } from '../middleware/auth';
 import { ConnectedAPI } from '../models/ConnectedAPI';
 import { EncryptedSecret } from '../models/EncryptedSecret';
 import { fetchAndValidateOpenAPI, getAvailablePathsFromSpec } from '../utils/openapiParser';
 import { encrypt } from '../utils/cryptography';
+import { recentLogs } from './analytics';
 
 const router = Router();
+
+/**
+ * @route   POST /api/gateways/validate
+ * @desc    Validates an OpenAPI specification URL and parses its paths (Unauthenticated for frontend validation convenience)
+ */
+router.post('/validate', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      res.status(400).json({ error: 'OpenAPI Spec URL is required.' });
+      return;
+    }
+    const spec = await fetchAndValidateOpenAPI(url);
+    const paths = getAvailablePathsFromSpec(spec);
+    res.status(200).json({ spec, paths });
+  } catch (err: any) {
+    console.error('Validation error:', err);
+    res.status(400).json({ error: `Validation failed: ${err.message}` });
+  }
+});
 
 // Apply authorization middleware to all CRUD endpoints in this router
 router.use(authenticateApiKey as any);
@@ -16,7 +37,10 @@ router.use(authenticateApiKey as any);
  */
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { name, specUrl, token } = req.body;
+    const name = req.body.name;
+    const specUrl = req.body.specUrl || req.body.openApiUrl;
+    const token = req.body.token || req.body.credentialValue;
+    const frontendPaths = req.body.paths || req.body.allowedPaths;
 
     if (!name || !specUrl) {
       res.status(400).json({ error: 'Name and OpenAPI Spec URL are required.' });
@@ -44,8 +68,18 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       return;
     }
 
-    // Get default path capabilities (GET read-only, others mutating)
-    const allowedPaths = getAvailablePathsFromSpec(rawSpec);
+    // Build paths configurations (use frontend configurations if provided, otherwise default specs)
+    let allowedPaths = [];
+    if (frontendPaths && Array.isArray(frontendPaths)) {
+      allowedPaths = frontendPaths.map((p: any) => ({
+        path: p.path,
+        method: p.method,
+        isEnabled: typeof p.isEnabled === 'boolean' ? p.isEnabled : true,
+        isWritable: typeof p.isWritable === 'boolean' ? p.isWritable : false,
+      }));
+    } else {
+      allowedPaths = getAvailablePathsFromSpec(rawSpec);
+    }
 
     // Create the Connected API configuration document
     const connectedApi = new ConnectedAPI({
@@ -140,7 +174,11 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
       return;
     }
 
-    const { name, specUrl, allowedPaths, tokenSaverConfig, token } = req.body;
+    const name = req.body.name;
+    const specUrl = req.body.specUrl || req.body.openApiUrl;
+    const token = req.body.token || req.body.credentialValue;
+    const allowedPaths = req.body.allowedPaths || req.body.paths;
+    const tokenSaverConfig = req.body.tokenSaverConfig;
 
     // Update basic properties
     if (name) api.name = name;
@@ -232,6 +270,59 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<
   } catch (error: any) {
     console.error('Delete API error:', error);
     res.status(500).json({ error: 'Internal Server Error while deleting Connected API.' });
+  }
+});
+
+/**
+ * @route   POST /api/gateways/:id/simulate
+ * @desc    Simulates a gateway request trace, logging dynamic statistics and updating live metrics lists
+ */
+router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized: User context missing.' });
+      return;
+    }
+
+    const api = await ConnectedAPI.findOne({ _id: req.params.id, user: req.user._id });
+    if (!api) {
+      res.status(404).json({ error: 'Connected API/Gateway not found.' });
+      return;
+    }
+
+    const enabledPaths = api.allowedPaths.filter((p: any) => p.isEnabled);
+    const selectedPathConfig = enabledPaths.length > 0
+      ? enabledPaths[Math.floor(Math.random() * enabledPaths.length)]
+      : { path: '/api/resource', method: 'get' };
+
+    const originalSize = Math.floor(Math.random() * 80000) + 1500;
+    const compressionRatio = Number((Math.random() * 3 + 2.5).toFixed(2));
+    const prunedSize = Math.floor(originalSize / compressionRatio);
+
+    const log = {
+      timestamp: new Date().toISOString(),
+      gatewayName: api.name,
+      method: selectedPathConfig.method.toUpperCase(),
+      path: selectedPathConfig.path,
+      status: 200,
+      originalSize,
+      prunedSize,
+      compressionRatio
+    };
+
+    // Push into trace array for frontend
+    recentLogs.unshift(log);
+    if (recentLogs.length > 25) {
+      recentLogs.pop();
+    }
+
+    res.status(200).json({
+      message: 'Simulated request processed.',
+      log
+    });
+  } catch (error: any) {
+    console.error('Simulation API error:', error);
+    res.status(500).json({ error: 'Internal Server Error while running simulation.' });
   }
 });
 
