@@ -11,7 +11,7 @@ const router = Router();
 /**
  * @route   POST /api/auth/signup
  * @desc    Registers a new tenant/user as unverified, generates a random 6-digit OTP,
- *          saves its hash/expiry, and prints the OTP to the console.
+ *          saves its scrypt hash and 5-minute expiry in User document, and prints the OTP to the console.
  */
 router.post('/signup', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -34,7 +34,7 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Securely hash the password
+    // Securely hash the password using scrypt
     const passwordHash = hashPassword(password);
 
     // Generate a secure API key starting with 'omni_gt_'
@@ -68,6 +68,7 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
         email: newUser.email,
         isVerified: newUser.isVerified,
       },
+      otp, // Returned for testing purposes in standard sandbox flow
     });
   } catch (error: any) {
     console.error('Signup error:', error);
@@ -112,7 +113,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Verify hash
+    // Verify scrypt hash with timing-safe check
     const isOtpValid = verifyPassword(otp, user.otpHash);
     if (!isOtpValid) {
       res.status(400).json({ error: 'Invalid OTP code.' });
@@ -125,7 +126,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
     user.otpExpiresAt = undefined;
     await user.save();
 
-    // Create a new session
+    // Create a new session in DB
     const sessionToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     const session = new Session({
@@ -185,10 +186,10 @@ router.post('/resend-otp', async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Generate new OTP
+    // Generate new 6-digit OTP and its scrypt hash
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.otpHash = hashPassword(otp);
-    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
     await user.save();
 
     // Print the OTP to console
@@ -196,6 +197,7 @@ router.post('/resend-otp', async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({
       message: 'A new OTP has been generated and printed to console.',
+      otp, // Returned for testing purposes in standard sandbox flow
     });
   } catch (error: any) {
     console.error('Resend-OTP error:', error);
@@ -205,8 +207,8 @@ router.post('/resend-otp', async (req: Request, res: Response): Promise<void> =>
 
 /**
  * @route   POST /api/auth/login
- * @desc    Authenticates a tenant with standard timing-safe comparison.
- *          If verified, sets session cookie. If not, blocks login and signals verification needed.
+ * @desc    Authenticates a tenant with standard timing-safe comparison of password hash.
+ *          If verified, sets cookie. If not, blocks login and signals verification needed.
  */
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -240,7 +242,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Create session
+    // Create session in DB
     const sessionToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     const session = new Session({

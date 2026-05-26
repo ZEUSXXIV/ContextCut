@@ -20,9 +20,12 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 // Global middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true
+}));
 app.use(cookieParser(process.env.SESSION_SECRET || 'fallback-cookie-secret-key-12345'));
+app.use(express.json());
 
 // Basic health check route
 app.get('/health', (req, res) => {
