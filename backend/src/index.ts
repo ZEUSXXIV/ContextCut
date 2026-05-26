@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
@@ -21,6 +22,7 @@ const port = process.env.PORT || 3001;
 // Global middleware
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser(process.env.SESSION_SECRET || 'fallback-cookie-secret-key-12345'));
 
 // Basic health check route
 app.get('/health', (req, res) => {
