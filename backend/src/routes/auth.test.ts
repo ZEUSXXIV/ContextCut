@@ -135,6 +135,7 @@ describe('Authentication Flow Phase 5 Tests', () => {
         email: 'unverified@test.com',
         passwordHash: passHash,
         isVerified: false,
+        save: jest.fn().mockResolvedValue(true),
       };
 
       (User.findOne as jest.Mock).mockResolvedValue(mockUser);
