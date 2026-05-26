@@ -30,7 +30,10 @@ describe('Authentication Flow Phase 5 Tests', () => {
     test('should register unverified user and print OTP to console', async () => {
       (User.findOne as jest.Mock).mockResolvedValue(null);
       
-      const mockSave = jest.fn().mockResolvedValue({});
+      const mockSave = jest.fn().mockImplementation(function(this: any) {
+        this.isVerified = false;
+        return Promise.resolve(this);
+      });
       (User as any).prototype.save = mockSave;
 
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
