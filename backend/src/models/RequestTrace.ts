@@ -25,6 +25,13 @@ export interface IRequestTrace extends Document {
   status: 'SUCCESS' | 'API_ERROR' | 'GATEWAY_ERROR';
   errorMessage?: string;
   
+  // Advanced Telemetry Payloads
+  requestHeaders?: Record<string, string>;
+  requestBody?: Record<string, any>;
+  requestQuery?: Record<string, any>;
+  rawResponseBody?: string;
+  optimizedResponseBody?: string;
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,6 +103,21 @@ const RequestTraceSchema = new Schema<IRequestTrace>(
       default: 'SUCCESS',
     },
     errorMessage: {
+      type: String,
+    },
+    requestHeaders: {
+      type: Schema.Types.Mixed,
+    },
+    requestBody: {
+      type: Schema.Types.Mixed,
+    },
+    requestQuery: {
+      type: Schema.Types.Mixed,
+    },
+    rawResponseBody: {
+      type: String,
+    },
+    optimizedResponseBody: {
       type: String,
     },
   },
