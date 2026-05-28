@@ -5,6 +5,7 @@ export interface IEncryptedSecret extends Document {
   encryptedData: string; // Hex-encoded encrypted secret value
   iv: string;            // Hex-encoded 12-byte initialization vector
   tag: string;           // Hex-encoded 16-byte GCM authentication tag
+  keyName: string;       // Custom auth header key (e.g. X-Rapidapi-Key)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +29,11 @@ const EncryptedSecretSchema = new Schema<IEncryptedSecret>(
     tag: {
       type: String,
       required: true,
+    },
+    keyName: {
+      type: String,
+      required: true,
+      default: 'Authorization',
     },
   },
   {
