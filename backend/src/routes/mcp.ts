@@ -226,7 +226,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 status: 'GATEWAY_ERROR',
                 errorMessage: `Security Block: Tool '${name}' is disabled in gateway configuration.`,
                 prompt: promptVal,
-                model: modelVal,
+                modelName: modelVal,
                 clientName,
               });
             } else if (matchedPathConfig.method !== 'get' && !matchedPathConfig.isWritable) {
@@ -248,7 +248,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 status: 'GATEWAY_ERROR',
                 errorMessage: `Security Block: Mutation '${name}' is read-only and blocked by gateway.`,
                 prompt: promptVal,
-                model: modelVal,
+                modelName: modelVal,
                 clientName,
               });
             } else {
@@ -454,7 +454,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 rawResponseBody: rawResponseBodyStr,
                 optimizedResponseBody: optimizedResponseBodyStr,
                 prompt: promptVal,
-                model: modelVal,
+                modelName: modelVal,
                 clientName,
               }).catch(err => console.error('Failed to save request trace:', err));
             }
