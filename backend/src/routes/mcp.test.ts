@@ -15,6 +15,7 @@ jest.mock('mongoose', () => {
 // Mock database models
 jest.mock('../models/ConnectedAPI');
 jest.mock('../models/EncryptedSecret');
+jest.mock('../models/RequestTrace');
 
 // Mock auth middleware to bypass DB lookup and yield a mock tenant user
 jest.mock('../middleware/auth', () => {
