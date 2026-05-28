@@ -11,8 +11,14 @@ import { RequestTrace } from '../models/RequestTrace';
 
 const router = Router();
 
-// Store active Server-Sent Events (SSE) client response streams in memory keyed by session ID
-const sseSessions = new Map<string, Response>();
+interface SseSession {
+  res: Response;
+  clientName?: string;
+  clientVersion?: string;
+}
+
+// Store active Server-Sent Events (SSE) client response streams and metadata in memory keyed by session ID
+const sseSessions = new Map<string, SseSession>();
 
 /**
  * @route   GET /api/mcp/sse
@@ -40,7 +46,7 @@ router.get('/sse', authenticateApiKey as any, (req: AuthenticatedRequest, res: R
 
   // Generate unique session ID for client interactions
   const sessionId = crypto.randomBytes(16).toString('hex');
-  sseSessions.set(sessionId, res);
+  sseSessions.set(sessionId, { res });
 
   req.on('close', () => {
     clearInterval(heartbeatInterval);
@@ -74,11 +80,12 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
     }
 
     // Retrieve corresponding SSE response connection stream
-    const clientStream = sseSessions.get(sessionId);
-    if (!clientStream) {
+    const session = sseSessions.get(sessionId);
+    if (!session || !session.res) {
       res.status(400).json({ error: 'Session has expired or connection is closed.' });
       return;
     }
+    const clientStream = session.res;
 
     const { jsonrpc, id, method, params } = req.body;
 
@@ -98,6 +105,13 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
     try {
       if (method === 'initialize') {
+        // Save client orchestrator information in SSE session context
+        if (params && params.clientInfo) {
+          session.clientName = params.clientInfo.name;
+          session.clientVersion = params.clientInfo.version;
+          console.log(`MCP Client identified: ${session.clientName} (v${session.clientVersion})`);
+        }
+
         // Standard MCP initialization handshake response
         jsonRpcResponse.result = {
           protocolVersion: '2024-11-05',
@@ -128,6 +142,45 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
         if (!name) {
           jsonRpcResponse.error = { code: -32602, message: 'Invalid params: name is required.' };
         } else {
+          // Retrieve clientName from session context
+          const clientName = session.clientName;
+
+          // Robust multi-layered telemetry extraction for Model & Prompt
+          let promptVal: string | undefined;
+          let modelVal: string | undefined;
+
+          if (params) {
+            // 1. Try to find prompt in parameters
+            if (typeof params.prompt === 'string') {
+              promptVal = params.prompt;
+            } else if (params._meta && typeof params._meta.prompt === 'string') {
+              promptVal = params._meta.prompt;
+            } else if (params.arguments && params.arguments._meta && typeof params.arguments._meta.prompt === 'string') {
+              promptVal = params.arguments._meta.prompt;
+            } else if (params.arguments && typeof params.arguments.prompt === 'string') {
+              promptVal = params.arguments.prompt;
+            }
+
+            // 2. Try to find model in parameters
+            if (typeof params.model === 'string') {
+              modelVal = params.model;
+            } else if (params._meta && typeof params._meta.model === 'string') {
+              modelVal = params._meta.model;
+            } else if (params.arguments && params.arguments._meta && typeof params.arguments._meta.model === 'string') {
+              modelVal = params.arguments._meta.model;
+            } else if (params.arguments && typeof params.arguments.model === 'string') {
+              modelVal = params.arguments.model;
+            }
+          }
+
+          // Fallback to headers for model extraction
+          if (!modelVal) {
+            const xModel = req.headers['x-model'] || req.headers['x-model-name'];
+            if (typeof xModel === 'string') {
+              modelVal = xModel;
+            }
+          }
+
           // Resolve tool name to specific ConnectedAPI and path configuration
           const apis = await ConnectedAPI.find({ user: req.user._id });
           let matchedApi: any = null;
@@ -172,6 +225,9 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 proxyEnd: new Date(),
                 status: 'GATEWAY_ERROR',
                 errorMessage: `Security Block: Tool '${name}' is disabled in gateway configuration.`,
+                prompt: promptVal,
+                model: modelVal,
+                clientName,
               });
             } else if (matchedPathConfig.method !== 'get' && !matchedPathConfig.isWritable) {
               jsonRpcResponse.result = {
@@ -191,6 +247,9 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 proxyEnd: new Date(),
                 status: 'GATEWAY_ERROR',
                 errorMessage: `Security Block: Mutation '${name}' is read-only and blocked by gateway.`,
+                prompt: promptVal,
+                model: modelVal,
+                clientName,
               });
             } else {
               // Retrieve and decrypt auth secret for third-party REST API
@@ -394,6 +453,9 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 requestQuery: Object.keys(queryArgs).length > 0 ? queryArgs : undefined,
                 rawResponseBody: rawResponseBodyStr,
                 optimizedResponseBody: optimizedResponseBodyStr,
+                prompt: promptVal,
+                model: modelVal,
+                clientName,
               }).catch(err => console.error('Failed to save request trace:', err));
             }
           }
