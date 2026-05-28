@@ -85,7 +85,7 @@ router.get('/', authenticateApiKey as any, async (req: AuthenticatedRequest, res
         rawResponseBody: trace.rawResponseBody,
         optimizedResponseBody: trace.optimizedResponseBody,
         prompt: trace.prompt,
-        model: trace.model,
+        model: trace.modelName,
         clientName: trace.clientName
       };
     });
