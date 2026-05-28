@@ -158,12 +158,21 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
               if (secret) {
                 try {
                   const decryptedToken = decrypt(secret.encryptedData, secret.iv, secret.tag);
-                  headers['Authorization'] = `Bearer ${decryptedToken}`;
+                  const keyName = (secret as any).keyName || 'Authorization';
+                  if (keyName.toLowerCase() === 'authorization') {
+                    headers[keyName] = `Bearer ${decryptedToken}`;
+                  } else {
+                    headers[keyName] = decryptedToken;
+                  }
                 } catch (cryptoErr: any) {
                   console.error('Decryption failed for secret:', cryptoErr);
-                  headers['Authorization'] = ''; // Send empty authorization or keep clean
+                  const keyName = (secret as any).keyName || 'Authorization';
+                  headers[keyName] = ''; // Send empty authorization or keep clean
                 }
               }
+
+              // Retrieve static custom headers from ConnectedAPI configuration
+              const staticHeaders = matchedApi.customHeaders || {};
 
               // Extract and prepare URL base from server definitions or spec URL origin
               const spec = matchedApi.rawSpec;
@@ -227,6 +236,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                   data: Object.keys(bodyArgs).length > 0 ? bodyArgs : undefined,
                   headers: {
                     ...headers,
+                    ...staticHeaders,
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
                   },

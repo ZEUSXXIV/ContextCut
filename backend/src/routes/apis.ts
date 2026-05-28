@@ -42,6 +42,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
     const specUrl = req.body.specUrl || req.body.openApiUrl;
     const token = req.body.token || req.body.credentialValue;
     const frontendPaths = req.body.paths || req.body.allowedPaths;
+    const credentialKeyName = req.body.credentialKeyName || 'Authorization';
+    const customHeaders = req.body.customHeaders || {};
 
     if (!name || (!isManual && !specUrl)) {
       res.status(400).json({ error: 'Name and OpenAPI Spec URL are required.' });
@@ -107,6 +109,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       specUrl: finalSpecUrl,
       rawSpec,
       allowedPaths,
+      customHeaders,
     });
 
     await connectedApi.save();
@@ -119,6 +122,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         encryptedData,
         iv,
         tag,
+        keyName: credentialKeyName,
       });
       await secret.save();
     }
@@ -198,9 +202,12 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
     const token = req.body.token || req.body.credentialValue;
     const allowedPaths = req.body.allowedPaths || req.body.paths;
     const tokenSaverConfig = req.body.tokenSaverConfig;
+    const credentialKeyName = req.body.credentialKeyName;
+    const customHeaders = req.body.customHeaders;
 
     // Update basic properties
     if (name) api.name = name;
+    if (customHeaders) api.customHeaders = customHeaders;
 
     // If rawSpec is provided directly (manual definition), update it. Otherwise, standard URL refresh
     const rawSpec = req.body.rawSpec;
@@ -243,16 +250,24 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
 
     await api.save();
 
-    // If new secret credential token is passed, update the EncryptedSecret
-    if (token !== undefined) {
-      // Delete existing if blank is set, otherwise upsert
-      if (token === null || token.trim() === '') {
+    // If new secret credential token or header keyName is passed, update the EncryptedSecret
+    if (token !== undefined || credentialKeyName !== undefined) {
+      if (token === null || (token !== undefined && token.trim() === '')) {
         await EncryptedSecret.deleteOne({ connectedApi: api._id });
       } else {
-        const { encryptedData, iv, tag } = encrypt(token.trim());
+        const updateDoc: any = {};
+        if (token !== undefined) {
+          const { encryptedData, iv, tag } = encrypt(token.trim());
+          updateDoc.encryptedData = encryptedData;
+          updateDoc.iv = iv;
+          updateDoc.tag = tag;
+        }
+        if (credentialKeyName !== undefined) {
+          updateDoc.keyName = credentialKeyName;
+        }
         await EncryptedSecret.findOneAndUpdate(
           { connectedApi: api._id },
-          { encryptedData, iv, tag },
+          updateDoc,
           { upsert: true, new: true }
         );
       }
