@@ -21,6 +21,7 @@ export interface IConnectedAPI extends Document {
   rawSpec: any;
   allowedPaths: IPathConfig[];
   tokenSaverConfig: ITokenSaverConfig;
+  customHeaders?: Record<string, string>; // Dynamic static headers (e.g. X-Rapidapi-Host)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,6 +73,10 @@ const ConnectedAPISchema = new Schema<IConnectedAPI>(
       type: TokenSaverConfigSchema,
       required: true,
       default: () => ({}),
+    },
+    customHeaders: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   {
