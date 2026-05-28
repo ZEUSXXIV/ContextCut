@@ -1475,7 +1475,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {gateways.map((gt) => {
                       const id = gt.id || gt._id || 'mock';
-                      const gatewayUrl = `${BACKEND_URL}/api/mcp/sse?apiKey=omni_gt_developer_key_123456`;
+                      const gatewayUrl = `${BACKEND_URL}/api/mcp/sse?apiKey=${sessionApiKey || 'omni_gt_developer_key_123456'}`;
                       const isSimulating = simulatingId === id;
 
                       return (
@@ -2341,10 +2341,10 @@ export default function Dashboard() {
                       <span className="text-[9px] text-zinc-500 block uppercase font-bold tracking-wider">Hosted MCP Gateway URL</span>
                       <div className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-850 px-3 py-2 rounded-xl">
                         <span className="text-[10px] font-mono text-cyan-400 truncate flex-1 select-all">
-                          {`${BACKEND_URL}/api/mcp/sse?apiKey=omni_gt_developer_key_123456`}
+                          {`${BACKEND_URL}/api/mcp/sse?apiKey=${sessionApiKey || 'omni_gt_developer_key_123456'}`}
                         </span>
                         <button
-                          onClick={() => copyToClipboard(`${BACKEND_URL}/api/mcp/sse?apiKey=omni_gt_developer_key_123456`, 'mcp-url')}
+                          onClick={() => copyToClipboard(`${BACKEND_URL}/api/mcp/sse?apiKey=${sessionApiKey || 'omni_gt_developer_key_123456'}`, 'mcp-url')}
                           className="text-zinc-400 hover:text-white transition cursor-pointer"
                         >
                           {copiedId === 'mcp-url' ? (
