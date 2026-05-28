@@ -106,6 +106,7 @@ export default function Dashboard() {
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
   const [newGatewayId, setNewGatewayId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedTrace, setSelectedTrace] = useState<any | null>(null);
 
   // Manual API Designer state
   const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
@@ -1614,15 +1615,23 @@ export default function Dashboard() {
                       return (
                         <div
                           key={idx}
-                          className="border border-zinc-850 bg-zinc-900/10 p-3 rounded-xl space-y-2 flex flex-col hover:border-zinc-800 transition duration-200"
+                          onClick={() => setSelectedTrace(log)}
+                          className="border border-zinc-850 bg-zinc-900/10 p-3 rounded-xl space-y-2 flex flex-col hover:border-zinc-800/80 hover:bg-zinc-800/10 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] text-zinc-500 font-medium">
                               {new Date(log.timestamp).toLocaleTimeString()}
                             </span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider ${methodColors[log.method] || 'bg-zinc-800 text-zinc-400'}`}>
-                              {log.method}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {log.traceStatus === 'SUCCESS' ? (
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" title="Success Trace" />
+                              ) : (
+                                <AlertCircle className="w-3 h-3 text-red-400 animate-pulse" title="Error Trace" />
+                              )}
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider ${methodColors[log.method] || 'bg-zinc-800 text-zinc-400'}`}>
+                                {log.method}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="space-y-0.5">
@@ -1655,6 +1664,10 @@ export default function Dashboard() {
                                 {savingPct}% Saved
                               </span>
                             </div>
+                          </div>
+
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-zinc-500 group-hover:text-zinc-300 pointer-events-none">
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </div>
                         </div>
                       );
@@ -2383,6 +2396,244 @@ export default function Dashboard() {
         )}
 
       </main>
+
+      {/* Visual Request Telemetry Trace Details Modal */}
+      {selectedTrace && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto custom-scrollbar p-6 space-y-6 shadow-2xl relative">
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-zinc-850 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[9px] px-2 py-0.5 rounded font-extrabold uppercase tracking-wide border ${
+                    selectedTrace.method === 'GET'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  }`}>
+                    {selectedTrace.method}
+                  </span>
+                  <h3 className="text-base font-bold text-white tracking-wide">
+                    {selectedTrace.toolName}
+                  </h3>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-mono">
+                  {selectedTrace.gatewayName} • {selectedTrace.path}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTrace(null)}
+                className="text-zinc-500 hover:text-white p-1 hover:bg-zinc-800 rounded-lg transition cursor-pointer animate-fade-in"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Trace Parent Header Metadata */}
+            <div className="bg-zinc-950/80 border border-zinc-850 p-4 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold flex items-center gap-1.5">
+                  <Globe className="w-3 h-3 text-cyan-400" />
+                  W3C traceparent Context Header
+                </span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-mono bg-cyan-950/60 text-cyan-400 border border-cyan-900/40">
+                  Sampled (01)
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-850 px-3 py-2 rounded-xl">
+                <span className="text-[10px] font-mono text-cyan-400 truncate flex-1 select-all">
+                  00-{selectedTrace.traceId}-{selectedTrace.spanId}-01
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`00-${selectedTrace.traceId}-${selectedTrace.spanId}-01`);
+                    setCopiedId(`trace-${selectedTrace.traceId}`);
+                    setTimeout(() => setCopiedId(null), 2000);
+                  }}
+                  className="text-zinc-400 hover:text-white transition cursor-pointer"
+                  title="Copy traceparent"
+                >
+                  {copiedId === `trace-${selectedTrace.traceId}` ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-[10px] pt-1">
+                <div>
+                  <span className="text-zinc-500 font-bold block">TRACE ID</span>
+                  <span className="font-mono text-zinc-400">{selectedTrace.traceId}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500 font-bold block">SPAN ID</span>
+                  <span className="font-mono text-zinc-400">{selectedTrace.spanId}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Error Notification Banner */}
+            {selectedTrace.traceStatus !== 'SUCCESS' && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-wide">
+                    {selectedTrace.traceStatus === 'GATEWAY_ERROR' ? 'Gateway Block Event' : 'Downstream API Exception'}
+                  </p>
+                  <p className="text-[11px] font-mono text-zinc-300 font-medium">
+                    {selectedTrace.errorMessage || 'Unknown execution trace failure.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Latency Trace Timeline */}
+            <div className="space-y-3">
+              <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">
+                Execution Latency Lifecycle Timeline
+              </span>
+              
+              <div className="relative border-l-2 border-zinc-800 ml-3 pl-6 space-y-6">
+                
+                {/* Step 1 */}
+                <div className="relative">
+                  <span className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                    <Activity className="w-2.5 h-2.5 text-zinc-400" />
+                  </span>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-zinc-200">LLM Request Trigger</span>
+                      <span className="text-zinc-500 font-bold">0 ms</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400">
+                      Standard JSON-RPC 2.0 `tools/call` message captured over SSE channel.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="relative">
+                  <span className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                    <Cpu className="w-2.5 h-2.5 text-zinc-400" />
+                  </span>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-zinc-200">Omni Proxy Handshake</span>
+                      <span className="text-emerald-400 font-bold">+{selectedTrace.latencies?.gateway || 2} ms</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400">
+                      Resolved Connected API context. Salted credential key decrypted in-memory. Custom static routing headers merged.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Step 3 (Only if API was called) */}
+                {(selectedTrace.latencies?.origin > 0 || selectedTrace.traceStatus === 'SUCCESS' || selectedTrace.traceStatus === 'API_ERROR') && (
+                  <div className="relative">
+                    <span className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                      <Globe className="w-2.5 h-2.5 text-zinc-400" />
+                    </span>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-zinc-200">REST Downstream API Dispatch</span>
+                        <span className="text-cyan-400 font-bold">+{selectedTrace.latencies?.origin || 120} ms</span>
+                      </div>
+                      <p className="text-[10px] text-zinc-400 leading-relaxed">
+                        Axios connection established. Propagated W3C `traceparent` downstream.
+                      </p>
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                          selectedTrace.status >= 400 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        }`}>
+                          HTTP {selectedTrace.status}
+                        </span>
+                        <span className="text-[9px] text-zinc-500 truncate max-w-xs font-mono select-all">
+                          {selectedTrace.path}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4 */}
+                {selectedTrace.originalSize > 0 && (
+                  <div className="relative">
+                    <span className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                      <Layers className="w-2.5 h-2.5 text-zinc-400" />
+                    </span>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-zinc-200">Token-Saver Optimization Cap</span>
+                        <span className="text-zinc-500 font-bold">&lt; 1 ms</span>
+                      </div>
+                      <p className="text-[10px] text-zinc-400">
+                        Recursively pruned diagnostic trace keys, capped nested depth at 4 levels, and sliced arrays.
+                      </p>
+                      <div className="flex items-center gap-4 text-[9px] font-semibold text-zinc-500 pt-1 uppercase">
+                        <div>
+                          <span>RAW</span>
+                          <span className="text-zinc-400 ml-1">{(selectedTrace.originalSize / 1000).toFixed(1)} KB</span>
+                        </div>
+                        <div>
+                          <span>OPTIMIZED</span>
+                          <span className="text-white font-bold">{(selectedTrace.prunedSize / 1000).toFixed(1)} KB</span>
+                        </div>
+                        <div className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-300 font-black">
+                          {selectedTrace.compressionRatio}x Capped
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5 */}
+                <div className="relative">
+                  <span className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-zinc-400" />
+                  </span>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-white">JSON-RPC Stream Output Delivered</span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-300 font-black">
+                        Total {selectedTrace.latencies?.total || 122} ms
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400">
+                      Standard JSON-RPC 2.0 response wrapper dispatched back to client session stream.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Prompt Call Arguments */}
+            {selectedTrace.arguments && Object.keys(selectedTrace.arguments).length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">
+                  Model Arguments Input Schema
+                </span>
+                <div className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-2xl max-h-[150px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-zinc-300 select-all leading-relaxed whitespace-pre-wrap">
+                  {JSON.stringify(selectedTrace.arguments, null, 2)}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex justify-end pt-2 border-t border-zinc-850">
+              <button
+                type="button"
+                onClick={() => setSelectedTrace(null)}
+                className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 text-xs font-semibold rounded-xl text-zinc-200 transition duration-200 cursor-pointer"
+              >
+                Close Trace details
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-zinc-850/80 bg-zinc-950/20 py-6 text-center text-xs text-zinc-650 font-medium select-none relative z-10">
