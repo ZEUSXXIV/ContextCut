@@ -25,7 +25,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(cookieParser(process.env.SESSION_SECRET || 'fallback-cookie-secret-key-12345'));
-app.use(express.json());
+app.use(express.json({ type: ['application/json', 'application/json-rpc'] }));
 
 // Basic health check route
 app.get('/health', (req, res) => {
