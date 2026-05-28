@@ -78,7 +78,12 @@ router.get('/', authenticateApiKey as any, async (req: AuthenticatedRequest, res
           gateway: (trace.proxyEnd.getTime() - trace.proxyStart.getTime()) - 
                    ((trace.originEnd && trace.originStart) ? (trace.originEnd.getTime() - trace.originStart.getTime()) : 0),
           origin: (trace.originEnd && trace.originStart) ? (trace.originEnd.getTime() - trace.originStart.getTime()) : 0
-        }
+        },
+        requestHeaders: trace.requestHeaders,
+        requestBody: trace.requestBody,
+        requestQuery: trace.requestQuery,
+        rawResponseBody: trace.rawResponseBody,
+        optimizedResponseBody: trace.optimizedResponseBody
       };
     });
 
