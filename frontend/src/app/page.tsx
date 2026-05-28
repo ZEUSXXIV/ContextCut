@@ -1665,15 +1665,21 @@ export default function Dashboard() {
             </div>
 
             {/* Wizard Steps indicator */}
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-zinc-500 uppercase border-b border-zinc-850 pb-3">
-              <span className={wizardStep === 1 ? 'text-cyan-400 font-bold' : 'text-zinc-400'}>
-                1. Validate Endpoint Spec
-              </span>
-              <ChevronRight className="w-3.5 h-3.5" />
-              <span className={wizardStep === 2 ? 'text-cyan-400 font-bold' : 'text-zinc-400'}>
-                2. Select Paths & Build Gateway
-              </span>
-            </div>
+            {connectMethod === 'url' ? (
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-zinc-500 uppercase border-b border-zinc-850 pb-3">
+                <span className={wizardStep === 1 ? 'text-cyan-400 font-bold' : 'text-zinc-400'}>
+                  1. Validate Endpoint Spec
+                </span>
+                <ChevronRight className="w-3.5 h-3.5" />
+                <span className={wizardStep === 2 ? 'text-cyan-400 font-bold' : 'text-zinc-400'}>
+                  2. Select Paths & Build Gateway
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-cyan-400 uppercase border-b border-zinc-850 pb-3 font-extrabold">
+                Manual API Designer & Endpoint Modeler
+              </div>
+            )}
 
             {/* Step 1: URL input and Validator */}
             {wizardStep === 1 && (
@@ -1686,7 +1692,7 @@ export default function Dashboard() {
                     className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
                       connectMethod === 'url'
                         ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
-                        : 'text-zinc-205'
+                        : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     Import OpenAPI URL
@@ -1697,7 +1703,7 @@ export default function Dashboard() {
                     className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
                       connectMethod === 'manual'
                         ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
-                        : 'text-zinc-205'
+                        : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     Manual API Designer
