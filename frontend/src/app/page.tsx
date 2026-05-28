@@ -107,6 +107,7 @@ export default function Dashboard() {
   const [newGatewayId, setNewGatewayId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedTrace, setSelectedTrace] = useState<any | null>(null);
+  const [traceTab, setTraceTab] = useState<'request' | 'raw_response' | 'optimized_response'>('request');
 
   // Manual API Designer state
   const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
