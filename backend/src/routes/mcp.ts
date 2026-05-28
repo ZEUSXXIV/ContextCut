@@ -287,6 +287,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
               let originalSize: number = 0;
               let optimizedSize: number = 0;
               let traceStatus: 'SUCCESS' | 'API_ERROR' | 'GATEWAY_ERROR' = 'SUCCESS';
+              let traceErrorMessage: string | undefined;
               // Prepare redacted request headers for database storage
               const loggedHeaders: Record<string, string> = {};
               const secretKeyName = secret ? ((secret as any).keyName || 'Authorization') : 'Authorization';
