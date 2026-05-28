@@ -1649,6 +1649,30 @@ export default function Dashboard() {
                             </span>
                           </div>
 
+                          {log.prompt && (
+                            <div className="space-y-0.5">
+                              <span className="text-[9px] text-zinc-500 block font-semibold uppercase">Prompt / Intent</span>
+                              <span className="text-[10px] text-zinc-300 font-medium italic truncate max-w-full block">
+                                "{log.prompt}"
+                              </span>
+                            </div>
+                          )}
+
+                          {(log.model || log.clientName) && (
+                            <div className="flex items-center gap-1.5 pt-1">
+                              {log.clientName && (
+                                <span className="text-[8px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono">
+                                  {log.clientName}
+                                </span>
+                              )}
+                              {log.model && (
+                                <span className="text-[8px] px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-900/30 font-mono">
+                                  {log.model}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-850/80">
                             <div>
                               <span className="text-[8px] uppercase tracking-wider text-zinc-500 font-bold block">Size</span>
@@ -2473,6 +2497,44 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            {/* LLM & Client Telemetry Context */}
+            {(selectedTrace.prompt || selectedTrace.model || selectedTrace.clientName) && (
+              <div className="bg-zinc-950/40 border border-zinc-850 p-4 rounded-2xl space-y-3">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                  LLM & Client Context
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  {selectedTrace.clientName && (
+                    <div className="bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800/60">
+                      <span className="text-[10px] text-zinc-500 font-semibold block uppercase tracking-wider">Client Orchestrator</span>
+                      <span className="text-white font-medium flex items-center gap-1.5 mt-0.5 font-mono">
+                        <Terminal className="w-3.5 h-3.5 text-zinc-400" />
+                        {selectedTrace.clientName}
+                      </span>
+                    </div>
+                  )}
+                  {selectedTrace.model && (
+                    <div className="bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-800/60">
+                      <span className="text-[10px] text-zinc-500 font-semibold block uppercase tracking-wider">AI Model</span>
+                      <span className="text-white font-medium flex items-center gap-1.5 mt-0.5 font-mono">
+                        <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                        {selectedTrace.model}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {selectedTrace.prompt && (
+                  <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+                    <span className="text-[10px] text-zinc-500 font-semibold block uppercase tracking-wider">User Prompt / Intent</span>
+                    <p className="text-[11px] text-zinc-200 leading-relaxed font-medium italic">
+                      "{selectedTrace.prompt}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Error Notification Banner */}
             {selectedTrace.traceStatus !== 'SUCCESS' && (
