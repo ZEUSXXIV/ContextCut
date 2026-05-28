@@ -1,46 +1,13 @@
 import { Router, Response } from 'express';
 import { authenticateApiKey, AuthenticatedRequest } from '../middleware/auth';
 import { ConnectedAPI } from '../models/ConnectedAPI';
+import { RequestTrace } from '../models/RequestTrace';
 
 const router = Router();
 
-// Store dynamic request analytics logs in-memory for live terminal simulation tracking
-export const recentLogs: any[] = [
-  {
-    timestamp: new Date(Date.now() - 30000).toISOString(),
-    gatewayName: 'Stripe Payments',
-    method: 'GET',
-    path: '/v1/charges',
-    status: 200,
-    originalSize: 45000,
-    prunedSize: 10800,
-    compressionRatio: 4.16
-  },
-  {
-    timestamp: new Date(Date.now() - 120000).toISOString(),
-    gatewayName: 'GitHub API',
-    method: 'GET',
-    path: '/users/octocat/repos',
-    status: 200,
-    originalSize: 92000,
-    prunedSize: 22000,
-    compressionRatio: 4.18
-  },
-  {
-    timestamp: new Date(Date.now() - 300000).toISOString(),
-    gatewayName: 'OpenWeather Gateway',
-    method: 'GET',
-    path: '/data/2.5/weather',
-    status: 200,
-    originalSize: 1200,
-    prunedSize: 900,
-    compressionRatio: 1.33
-  }
-];
-
 /**
  * @route   GET /api/analytics
- * @desc    Yields aggregated metrics and recent gateway request trace logs
+ * @desc    Yields aggregated metrics and recent gateway request trace logs from MongoDB
  */
 router.get('/', authenticateApiKey as any, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -49,22 +16,77 @@ router.get('/', authenticateApiKey as any, async (req: AuthenticatedRequest, res
       return;
     }
 
-    const apis = await ConnectedAPI.find({ user: req.user._id });
-    
-    // Accumulate total connection statistics
-    let baseRequests = 1450;
-    let baseCompressionRatioSum = 4.15 * apis.length;
+    const apisCount = await ConnectedAPI.countDocuments({ user: req.user._id });
+    const totalRequests = await RequestTrace.countDocuments({ user: req.user._id });
 
-    // Fallbacks if no connections exist
-    const totalRequests = baseRequests + (apis.length * 12);
-    const activeConnectionsCount = apis.length;
-    const averageCompressionRatio = apis.length > 0 ? 4.15 : 0;
+    // Calculate average compression ratio from RequestTraces where sizes are present and > 0
+    const compressionStats = await RequestTrace.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          originalResponseSizeBytes: { $gt: 0 },
+          optimizedResponseSizeBytes: { $gt: 0 }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgOriginal: { $avg: '$originalResponseSizeBytes' },
+          avgOptimized: { $avg: '$optimizedResponseSizeBytes' }
+        }
+      }
+    ]);
+
+    let averageCompressionRatio = 4.15; // default fallback ratio if no requests have been logged yet
+    if (compressionStats.length > 0) {
+      const stats = compressionStats[0];
+      if (stats.avgOptimized > 0) {
+        averageCompressionRatio = Number((stats.avgOriginal / stats.avgOptimized).toFixed(2));
+      }
+    }
+
+    // Retrieve latest 25 RequestTraces
+    const traces = await RequestTrace.find({ user: req.user._id })
+      .sort({ proxyStart: -1 })
+      .limit(25)
+      .populate('connectedApi', 'name');
+
+    const liveRequestTracker = traces.map(trace => {
+      const api = trace.connectedApi as any;
+      const originalSize = trace.originalResponseSizeBytes || 0;
+      const prunedSize = trace.optimizedResponseSizeBytes || 0;
+      const compressionRatio = prunedSize > 0 ? Number((originalSize / prunedSize).toFixed(2)) : 1.0;
+
+      return {
+        id: trace._id,
+        traceId: trace.traceId,
+        spanId: trace.spanId,
+        timestamp: trace.proxyStart.toISOString(),
+        gatewayName: api ? api.name : (trace.toolName.startsWith('dummy_') || trace.toolName.startsWith('get_items') ? 'Dummy Testing API' : 'Manual API'),
+        method: trace.method || (trace.toolName.startsWith('post_') ? 'POST' : 'GET'),
+        path: trace.path || `/${trace.toolName.replace(/_/g, '/')}`,
+        toolName: trace.toolName,
+        status: trace.originStatus || (trace.status === 'GATEWAY_ERROR' ? 403 : 500),
+        traceStatus: trace.status,
+        errorMessage: trace.errorMessage,
+        arguments: trace.arguments,
+        originalSize,
+        prunedSize,
+        compressionRatio,
+        latencies: {
+          total: trace.proxyEnd.getTime() - trace.proxyStart.getTime(),
+          gateway: (trace.proxyEnd.getTime() - trace.proxyStart.getTime()) - 
+                   ((trace.originEnd && trace.originStart) ? (trace.originEnd.getTime() - trace.originStart.getTime()) : 0),
+          origin: (trace.originEnd && trace.originStart) ? (trace.originEnd.getTime() - trace.originStart.getTime()) : 0
+        }
+      };
+    });
 
     res.json({
       totalRequests,
-      averageCompressionRatio: averageCompressionRatio > 0 ? averageCompressionRatio : 4.15,
-      activeConnectionsCount,
-      liveRequestTracker: recentLogs
+      averageCompressionRatio,
+      activeConnectionsCount: apisCount,
+      liveRequestTracker
     });
   } catch (error: any) {
     console.error('Analytics route error:', error);

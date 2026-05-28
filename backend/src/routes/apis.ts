@@ -4,7 +4,9 @@ import { ConnectedAPI } from '../models/ConnectedAPI';
 import { EncryptedSecret } from '../models/EncryptedSecret';
 import { fetchAndValidateOpenAPI, getAvailablePathsFromSpec } from '../utils/openapiParser';
 import { encrypt } from '../utils/cryptography';
-import { recentLogs } from './analytics';
+import { RequestTrace } from '../models/RequestTrace';
+import { getToolName } from '../utils/openapiParser';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -337,8 +339,35 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
     const compressionRatio = Number((Math.random() * 3 + 2.5).toFixed(2));
     const prunedSize = Math.floor(originalSize / compressionRatio);
 
+    const latencyOrigin = Math.floor(Math.random() * 200) + 50; // 50-250ms
+    const latencyGateway = Math.floor(Math.random() * 15) + 2; // 2-17ms
+    
+    const proxyStart = new Date(Date.now() - (latencyOrigin + latencyGateway));
+    const originStart = new Date(proxyStart.getTime() + Math.floor(latencyGateway / 2));
+    const originEnd = new Date(originStart.getTime() + latencyOrigin);
+    const proxyEnd = new Date();
+
+    const simulatedTrace = await RequestTrace.create({
+      traceId: crypto.randomBytes(16).toString('hex'),
+      spanId: crypto.randomBytes(8).toString('hex'),
+      user: req.user._id,
+      connectedApi: api._id,
+      toolName: getToolName(selectedPathConfig.method, selectedPathConfig.path),
+      method: selectedPathConfig.method.toUpperCase(),
+      path: selectedPathConfig.path,
+      arguments: { q: 'simulated_query' },
+      proxyStart,
+      proxyEnd,
+      originStart,
+      originEnd,
+      originalResponseSizeBytes: originalSize,
+      optimizedResponseSizeBytes: prunedSize,
+      originStatus: 200,
+      status: 'SUCCESS'
+    });
+
     const log = {
-      timestamp: new Date().toISOString(),
+      timestamp: proxyStart.toISOString(),
       gatewayName: api.name,
       method: selectedPathConfig.method.toUpperCase(),
       path: selectedPathConfig.path,
@@ -347,12 +376,6 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
       prunedSize,
       compressionRatio
     };
-
-    // Push into trace array for frontend
-    recentLogs.unshift(log);
-    if (recentLogs.length > 25) {
-      recentLogs.pop();
-    }
 
     res.status(200).json({
       message: 'Simulated request processed.',
