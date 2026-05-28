@@ -347,6 +347,35 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
     const originEnd = new Date(originStart.getTime() + latencyOrigin);
     const proxyEnd = new Date();
 
+    const simulatedPrompts = [
+      "Find top performing actions in IMDB for hitman movie query",
+      "Look up clinical trials for oncology pipeline phase 3",
+      "Search ChemBL database for compounds similar to aspirin",
+      "Fetch biological pathway enrichment for TP53 gene in Reactome",
+      "List transcription factor binding targets for JASPAR MA0139.1",
+      "Check evolutionary conservation phastCons scores for genomic region chr1:10000-11000",
+      "Retrieve regulatory element annotations from ENCODE SCREEN SCREEN registry"
+    ];
+
+    const simulatedModels = [
+      "claude-3-5-sonnet",
+      "gpt-4o",
+      "deepseek-v3",
+      "gemini-1.5-pro",
+      "claude-3-opus"
+    ];
+
+    const simulatedClients = [
+      "Cursor",
+      "Claude Desktop",
+      "LangChain MCP Client",
+      "Bespoke Agent SDK"
+    ];
+
+    const randomPrompt = simulatedPrompts[Math.floor(Math.random() * simulatedPrompts.length)];
+    const randomModel = simulatedModels[Math.floor(Math.random() * simulatedModels.length)];
+    const randomClient = simulatedClients[Math.floor(Math.random() * simulatedClients.length)];
+
     const simulatedTrace = await RequestTrace.create({
       traceId: crypto.randomBytes(16).toString('hex'),
       spanId: crypto.randomBytes(8).toString('hex'),
@@ -363,7 +392,10 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
       originalResponseSizeBytes: originalSize,
       optimizedResponseSizeBytes: prunedSize,
       originStatus: 200,
-      status: 'SUCCESS'
+      status: 'SUCCESS',
+      prompt: randomPrompt,
+      model: randomModel,
+      clientName: randomClient
     });
 
     const log = {
