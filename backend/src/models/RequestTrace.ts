@@ -34,7 +34,7 @@ export interface IRequestTrace extends Document {
   
   // Advanced Telemetry (Model, Client, Prompt)
   prompt?: string;
-  model?: string;
+  modelName?: string;
   clientName?: string;
   
   createdAt: Date;
@@ -128,7 +128,7 @@ const RequestTraceSchema = new Schema<IRequestTrace>(
     prompt: {
       type: String,
     },
-    model: {
+    modelName: {
       type: String,
     },
     clientName: {
