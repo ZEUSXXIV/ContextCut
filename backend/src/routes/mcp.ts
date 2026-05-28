@@ -176,7 +176,16 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
               // Extract and prepare URL base from server definitions or spec URL origin
               const spec = matchedApi.rawSpec;
-              const baseUrl = spec.servers?.[0]?.url || new URL(matchedApi.specUrl).origin;
+              let baseUrl = 'http://localhost';
+              try {
+                if (spec.servers && spec.servers[0] && spec.servers[0].url) {
+                  baseUrl = spec.servers[0].url;
+                } else if (matchedApi.specUrl && matchedApi.specUrl.startsWith('http')) {
+                  baseUrl = new URL(matchedApi.specUrl).origin;
+                }
+              } catch (urlErr) {
+                console.error('Failed to parse specUrl origin:', urlErr);
+              }
 
               // Categorize and extract parameters
               const operation = spec.paths[matchedPathConfig.path]?.[matchedPathConfig.method];
@@ -254,7 +263,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
               } catch (httpErr: any) {
                 console.error('Proxied REST request failed:', httpErr);
                 jsonRpcResponse.result = {
-                  content: [{ type: 'text', text: `HTTP connection failed: ${httpErr.message}` }],
+                  content: [{ type: 'text', text: `HTTP connection failed: ${httpErr.message || httpErr}` }],
                   isError: true,
                 };
               }
