@@ -6,6 +6,8 @@ export interface IRequestTrace extends Document {
   user: Types.ObjectId;
   connectedApi: Types.ObjectId;
   toolName: string;
+  method?: string;
+  path?: string;
   arguments?: Record<string, any>;
   
   // Latency Metrics
@@ -53,6 +55,12 @@ const RequestTraceSchema = new Schema<IRequestTrace>(
     toolName: {
       type: String,
       required: true,
+    },
+    method: {
+      type: String,
+    },
+    path: {
+      type: String,
     },
     arguments: {
       type: Schema.Types.Mixed,
