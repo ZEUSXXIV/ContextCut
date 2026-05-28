@@ -87,4 +87,13 @@ const ConnectedAPISchema = new Schema<IConnectedAPI>(
 // Create compound index for user and name to ensure uniqueness of connected APIs per tenant
 ConnectedAPISchema.index({ user: 1, name: 1 }, { unique: true });
 
+// Define virtual for paths to align with frontend property names
+ConnectedAPISchema.virtual('paths').get(function(this: any) {
+  return this.allowedPaths;
+});
+
+// Ensure virtual fields are serialized
+ConnectedAPISchema.set('toObject', { virtuals: true });
+ConnectedAPISchema.set('toJSON', { virtuals: true });
+
 export const ConnectedAPI = model<IConnectedAPI>('ConnectedAPI', ConnectedAPISchema);
