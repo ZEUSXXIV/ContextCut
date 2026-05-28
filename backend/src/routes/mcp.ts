@@ -287,7 +287,39 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
               let originalSize: number = 0;
               let optimizedSize: number = 0;
               let traceStatus: 'SUCCESS' | 'API_ERROR' | 'GATEWAY_ERROR' = 'SUCCESS';
-              let traceErrorMessage: string | undefined;
+              // Prepare redacted request headers for database storage
+              const loggedHeaders: Record<string, string> = {};
+              const secretKeyName = secret ? ((secret as any).keyName || 'Authorization') : 'Authorization';
+              
+              const allRequestHeaders = {
+                ...headers,
+                ...staticHeaders,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              };
+              
+              for (const hKey of Object.keys(allRequestHeaders)) {
+                if (
+                  hKey.toLowerCase() === 'authorization' ||
+                  hKey.toLowerCase() === 'x-rapidapi-key' ||
+                  hKey.toLowerCase() === secretKeyName.toLowerCase()
+                ) {
+                  loggedHeaders[hKey] = '[REDACTED]';
+                } else {
+                  loggedHeaders[hKey] = allRequestHeaders[hKey];
+                }
+              }
+
+              const capTraceBody = (body: any): string => {
+                const str = typeof body === 'string' ? body : JSON.stringify(body || {});
+                if (str.length > 5000) {
+                  return str.substring(0, 5000) + '\n\n... [Truncated for Trace Storage]';
+                }
+                return str;
+              };
+
+              let rawResponseBodyStr: string | undefined;
+              let optimizedResponseBodyStr: string | undefined;
 
               try {
                 const response = await axios({
@@ -313,6 +345,9 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
                 originalSize = Buffer.byteLength(typeof response.data === 'string' ? response.data : JSON.stringify(response.data || {}), 'utf8');
                 optimizedSize = Buffer.byteLength(typeof optimizedResponse === 'string' ? optimizedResponse : JSON.stringify(optimizedResponse || {}), 'utf8');
+
+                rawResponseBodyStr = capTraceBody(response.data);
+                optimizedResponseBodyStr = capTraceBody(optimizedResponse);
 
                 jsonRpcResponse.result = {
                   content: [{ type: 'text', text: optimizedResponse }],
@@ -353,6 +388,11 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 originStatus: responseStatus,
                 status: traceStatus,
                 errorMessage: traceErrorMessage,
+                requestHeaders: loggedHeaders,
+                requestBody: Object.keys(bodyArgs).length > 0 ? bodyArgs : undefined,
+                requestQuery: Object.keys(queryArgs).length > 0 ? queryArgs : undefined,
+                rawResponseBody: rawResponseBodyStr,
+                optimizedResponseBody: optimizedResponseBodyStr,
               }).catch(err => console.error('Failed to save request trace:', err));
             }
           }
