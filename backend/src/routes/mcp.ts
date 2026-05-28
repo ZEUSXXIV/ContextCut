@@ -7,6 +7,7 @@ import { EncryptedSecret } from '../models/EncryptedSecret';
 import { convertSpecToMCPTools, getToolName } from '../utils/openapiParser';
 import { decrypt } from '../utils/cryptography';
 import { applyTokenSaver } from '../utils/tokenSaver';
+import { RequestTrace } from '../models/RequestTrace';
 
 const router = Router();
 
@@ -122,6 +123,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
           tools: allTools,
         };
       } else if (method === 'tools/call') {
+        const proxyStart = new Date();
         const { name, arguments: args } = params || {};
         if (!name) {
           jsonRpcResponse.error = { code: -32602, message: 'Invalid params: name is required.' };
@@ -146,21 +148,56 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
           if (!matchedApi || !matchedPathConfig) {
             jsonRpcResponse.error = { code: -32601, message: `Tool not found: ${name}` };
           } else {
+            // Generate standard W3C traceparent variables
+            const traceId = crypto.randomBytes(16).toString('hex');
+            const spanId = crypto.randomBytes(8).toString('hex');
+            const traceparentStr = `00-${traceId}-${spanId}-01`;
+
             // Security Baseline Enforcement: Block disabled paths or non-writable mutating methods
             if (!matchedPathConfig.isEnabled) {
               jsonRpcResponse.result = {
                 content: [{ type: 'text', text: `Error: Tool '${name}' is disabled in configuration.` }],
                 isError: true,
               };
+              await RequestTrace.create({
+                traceId,
+                spanId,
+                user: req.user._id,
+                connectedApi: matchedApi._id,
+                toolName: name,
+                method: matchedPathConfig.method.toUpperCase(),
+                path: matchedPathConfig.path,
+                arguments: args,
+                proxyStart,
+                proxyEnd: new Date(),
+                status: 'GATEWAY_ERROR',
+                errorMessage: `Security Block: Tool '${name}' is disabled in gateway configuration.`,
+              });
             } else if (matchedPathConfig.method !== 'get' && !matchedPathConfig.isWritable) {
               jsonRpcResponse.result = {
                 content: [{ type: 'text', text: `Security Error: Mutation '${name}' is read-only and blocked.` }],
                 isError: true,
               };
+              await RequestTrace.create({
+                traceId,
+                spanId,
+                user: req.user._id,
+                connectedApi: matchedApi._id,
+                toolName: name,
+                method: matchedPathConfig.method.toUpperCase(),
+                path: matchedPathConfig.path,
+                arguments: args,
+                proxyStart,
+                proxyEnd: new Date(),
+                status: 'GATEWAY_ERROR',
+                errorMessage: `Security Block: Mutation '${name}' is read-only and blocked by gateway.`,
+              });
             } else {
               // Retrieve and decrypt auth secret for third-party REST API
               const secret = await EncryptedSecret.findOne({ connectedApi: matchedApi._id });
-              const headers: Record<string, string> = {};
+              const headers: Record<string, string> = {
+                'traceparent': traceparentStr,
+              };
 
               if (secret) {
                 try {
@@ -244,6 +281,14 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
               const fullUrl = `${baseUrl.replace(/\/$/, '')}/${resolvedPath.replace(/^\//, '')}`;
               console.log(`MCP Gateway proxying [${matchedPathConfig.method.toUpperCase()}] to ${fullUrl}`);
 
+              const originStart = new Date();
+              let originEnd: Date | undefined;
+              let responseStatus: number | undefined;
+              let originalSize: number = 0;
+              let optimizedSize: number = 0;
+              let traceStatus: 'SUCCESS' | 'API_ERROR' | 'GATEWAY_ERROR' = 'SUCCESS';
+              let traceErrorMessage: string | undefined;
+
               try {
                 const response = await axios({
                   method: matchedPathConfig.method,
@@ -260,20 +305,55 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                   validateStatus: () => true, // Resolve all HTTP statuses safely
                 });
 
+                originEnd = new Date();
+                responseStatus = response.status;
+
                 // Apply Token-Saver optimization recursive layer to response body
                 const optimizedResponse = applyTokenSaver(response.data, matchedApi.tokenSaverConfig);
+
+                originalSize = Buffer.byteLength(typeof response.data === 'string' ? response.data : JSON.stringify(response.data || {}), 'utf8');
+                optimizedSize = Buffer.byteLength(typeof optimizedResponse === 'string' ? optimizedResponse : JSON.stringify(optimizedResponse || {}), 'utf8');
 
                 jsonRpcResponse.result = {
                   content: [{ type: 'text', text: optimizedResponse }],
                   isError: response.status >= 400,
                 };
+
+                if (response.status >= 400) {
+                  traceStatus = 'API_ERROR';
+                  traceErrorMessage = `Downstream HTTP ${response.status} returned by origin API.`;
+                }
               } catch (httpErr: any) {
+                originEnd = new Date();
+                traceStatus = 'API_ERROR';
+                traceErrorMessage = httpErr.message || String(httpErr);
                 console.error('Proxied REST request failed:', httpErr);
                 jsonRpcResponse.result = {
                   content: [{ type: 'text', text: `HTTP connection failed: ${httpErr.message || httpErr}` }],
                   isError: true,
                 };
               }
+
+              // Persist request observability trace
+              await RequestTrace.create({
+                traceId,
+                spanId,
+                user: req.user._id,
+                connectedApi: matchedApi._id,
+                toolName: name,
+                method: matchedPathConfig.method.toUpperCase(),
+                path: matchedPathConfig.path,
+                arguments: args,
+                proxyStart,
+                proxyEnd: new Date(),
+                originStart,
+                originEnd,
+                originalResponseSizeBytes: originalSize,
+                optimizedResponseSizeBytes: optimizedSize,
+                originStatus: responseStatus,
+                status: traceStatus,
+                errorMessage: traceErrorMessage,
+              }).catch(err => console.error('Failed to save request trace:', err));
             }
           }
         }
