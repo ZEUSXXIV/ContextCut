@@ -394,7 +394,7 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
       originStatus: 200,
       status: 'SUCCESS',
       prompt: randomPrompt,
-      model: randomModel,
+      modelName: randomModel,
       clientName: randomClient
     });
 
