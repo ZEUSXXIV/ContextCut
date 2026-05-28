@@ -38,11 +38,12 @@ router.use(authenticateApiKey as any);
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const name = req.body.name;
+    const isManual = req.body.isManual === true;
     const specUrl = req.body.specUrl || req.body.openApiUrl;
     const token = req.body.token || req.body.credentialValue;
     const frontendPaths = req.body.paths || req.body.allowedPaths;
 
-    if (!name || !specUrl) {
+    if (!name || (!isManual && !specUrl)) {
       res.status(400).json({ error: 'Name and OpenAPI Spec URL are required.' });
       return;
     }
@@ -61,12 +62,30 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 
     // Fetch and validate the OpenAPI specification
     let rawSpec: any;
-    try {
-      rawSpec = await fetchAndValidateOpenAPI(specUrl);
-    } catch (err: any) {
-      res.status(400).json({ error: `OpenAPI spec loading error: ${err.message}` });
-      return;
+    if (isManual) {
+      rawSpec = req.body.rawSpec;
+      if (!rawSpec || typeof rawSpec !== 'object') {
+        res.status(400).json({ error: 'Valid rawSpec object is required for manually designed APIs.' });
+        return;
+      }
+      if (!rawSpec.openapi && !rawSpec.swagger) {
+        res.status(400).json({ error: 'Manually designed API spec must contain an openapi or swagger definition version.' });
+        return;
+      }
+      if (!rawSpec.paths) {
+        res.status(400).json({ error: 'Manually designed API spec must contain a paths object.' });
+        return;
+      }
+    } else {
+      try {
+        rawSpec = await fetchAndValidateOpenAPI(specUrl);
+      } catch (err: any) {
+        res.status(400).json({ error: `OpenAPI spec loading error: ${err.message}` });
+        return;
+      }
     }
+
+    const finalSpecUrl = specUrl || (rawSpec.servers?.[0]?.url) || 'manual';
 
     // Build paths configurations (use frontend configurations if provided, otherwise default specs)
     let allowedPaths = [];
@@ -85,7 +104,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
     const connectedApi = new ConnectedAPI({
       user: req.user._id,
       name,
-      specUrl,
+      specUrl: finalSpecUrl,
       rawSpec,
       allowedPaths,
     });
@@ -183,14 +202,18 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
     // Update basic properties
     if (name) api.name = name;
 
-    // If specification URL changed, re-parse and refresh paths
-    if (specUrl && specUrl !== api.specUrl) {
+    // If rawSpec is provided directly (manual definition), update it. Otherwise, standard URL refresh
+    const rawSpec = req.body.rawSpec;
+    if (rawSpec && typeof rawSpec === 'object') {
+      api.rawSpec = rawSpec;
+      if (specUrl) api.specUrl = specUrl;
+    } else if (specUrl && specUrl !== api.specUrl) {
       try {
-        const rawSpec = await fetchAndValidateOpenAPI(specUrl);
+        const parsedSpec = await fetchAndValidateOpenAPI(specUrl);
         api.specUrl = specUrl;
-        api.rawSpec = rawSpec;
+        api.rawSpec = parsedSpec;
         // Reset/re-derive paths based on new spec
-        api.allowedPaths = getAvailablePathsFromSpec(rawSpec);
+        api.allowedPaths = getAvailablePathsFromSpec(parsedSpec);
       } catch (err: any) {
         res.status(400).json({ error: `Failed to refresh spec from URL: ${err.message}` });
         return;
