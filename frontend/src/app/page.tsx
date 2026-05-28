@@ -2608,17 +2608,134 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Prompt Call Arguments */}
-            {selectedTrace.arguments && Object.keys(selectedTrace.arguments).length > 0 && (
-              <div className="space-y-2">
-                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">
-                  Model Arguments Input Schema
-                </span>
-                <div className="bg-zinc-950 border border-zinc-850 p-3.5 rounded-2xl max-h-[150px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-zinc-300 select-all leading-relaxed whitespace-pre-wrap">
-                  {JSON.stringify(selectedTrace.arguments, null, 2)}
-                </div>
+            {/* Advanced Tracing Payload Explorer */}
+            <div className="space-y-4 pt-4 border-t border-zinc-850">
+              
+              {/* Tab Selector Buttons */}
+              <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-850">
+                <button
+                  type="button"
+                  onClick={() => setTraceTab('request')}
+                  className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                    traceTab === 'request'
+                      ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Request Info
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTraceTab('raw_response')}
+                  className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                    traceTab === 'raw_response'
+                      ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Raw Response
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTraceTab('optimized_response')}
+                  className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                    traceTab === 'optimized_response'
+                      ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Optimized Response
+                </button>
               </div>
-            )}
+
+              {/* Tab Content 1: Request Details */}
+              {traceTab === 'request' && (
+                <div className="space-y-3 animate-fade-in">
+                  
+                  {/* Headers */}
+                  {selectedTrace.requestHeaders && Object.keys(selectedTrace.requestHeaders).length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">Sanitized Proxy HTTP Headers</span>
+                      <div className="bg-zinc-950 border border-zinc-850 p-3 rounded-2xl max-h-[120px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-zinc-400 select-all leading-relaxed whitespace-pre-wrap">
+                        {JSON.stringify(selectedTrace.requestHeaders, null, 2)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Query Args */}
+                  {selectedTrace.requestQuery && Object.keys(selectedTrace.requestQuery).length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">Dispatched REST Query Parameters</span>
+                      <div className="bg-zinc-950 border border-zinc-850 p-3 rounded-2xl max-h-[120px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-cyan-300 select-all leading-relaxed whitespace-pre-wrap">
+                        {JSON.stringify(selectedTrace.requestQuery, null, 2)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Body Args */}
+                  {selectedTrace.requestBody && Object.keys(selectedTrace.requestBody).length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">Dispatched REST Body Parameters</span>
+                      <div className="bg-zinc-950 border border-zinc-850 p-3 rounded-2xl max-h-[120px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-blue-300 select-all leading-relaxed whitespace-pre-wrap">
+                        {JSON.stringify(selectedTrace.requestBody, null, 2)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LLM Client Arguments */}
+                  {selectedTrace.arguments && Object.keys(selectedTrace.arguments).length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">LLM Client Incoming JSON Arguments</span>
+                      <div className="bg-zinc-950 border border-zinc-850 p-3 rounded-2xl max-h-[120px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-zinc-300 select-all leading-relaxed whitespace-pre-wrap">
+                        {JSON.stringify(selectedTrace.arguments, null, 2)}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              {/* Tab Content 2: Raw Response */}
+              {traceTab === 'raw_response' && (
+                <div className="space-y-1.5 animate-fade-in">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">Downstream JSON/Text Response Payload</span>
+                  <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-2xl max-h-[200px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-emerald-400 select-all leading-relaxed whitespace-pre-wrap">
+                    {(() => {
+                      if (!selectedTrace.rawResponseBody) {
+                        return <span className="text-zinc-650 italic">No response payload recorded.</span>;
+                      }
+                      try {
+                        const parsed = JSON.parse(selectedTrace.rawResponseBody);
+                        return JSON.stringify(parsed, null, 2);
+                      } catch (e) {
+                        return selectedTrace.rawResponseBody;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab Content 3: Optimized Response */}
+              {traceTab === 'optimized_response' && (
+                <div className="space-y-1.5 animate-fade-in">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">Pruned Token-Saver Response (Relayed to Model)</span>
+                  <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-2xl max-h-[200px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-cyan-300 select-all leading-relaxed whitespace-pre-wrap">
+                    {(() => {
+                      if (!selectedTrace.optimizedResponseBody) {
+                        return <span className="text-zinc-650 italic">No optimized payload recorded.</span>;
+                      }
+                      try {
+                        const parsed = JSON.parse(selectedTrace.optimizedResponseBody);
+                        return JSON.stringify(parsed, null, 2);
+                      } catch (e) {
+                        return selectedTrace.optimizedResponseBody;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
+            </div>
 
             {/* Modal Actions */}
             <div className="flex justify-end pt-2 border-t border-zinc-850">
