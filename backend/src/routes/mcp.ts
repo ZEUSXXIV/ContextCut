@@ -81,8 +81,15 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
     const { jsonrpc, id, method, params } = req.body;
 
-    if (jsonrpc !== '2.0' || !id) {
+    if (jsonrpc !== '2.0') {
       res.status(400).json({ error: 'Invalid JSON-RPC request format.' });
+      return;
+    }
+
+    // Handle JSON-RPC 2.0 Notifications (requests without an ID member)
+    // The server MUST NOT reply or send any response through the SSE stream for notifications
+    if (id === undefined || id === null) {
+      res.status(200).json({ status: 'ignored_notification' });
       return;
     }
 
