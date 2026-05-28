@@ -107,6 +107,101 @@ export default function Dashboard() {
   const [newGatewayId, setNewGatewayId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Manual API Designer state
+  const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
+  const [baseUrl, setBaseUrl] = useState('');
+  const [manualEndpoints, setManualEndpoints] = useState<any[]>([
+    {
+      path: '/current',
+      method: 'get',
+      description: 'Get current information',
+      parameters: [
+        { name: 'city', in: 'query', type: 'string', required: true, description: 'Target city name' }
+      ]
+    }
+  ]);
+
+  const synthesizeOpenApiSpec = (name: string, urlBase: string, endpoints: any[]) => {
+    const paths: Record<string, any> = {};
+
+    endpoints.forEach((ep) => {
+      const pathKey = ep.path.startsWith('/') ? ep.path : `/${ep.path}`;
+      const methodKey = ep.method.toLowerCase();
+      
+      const parameters: any[] = [];
+      const bodyProperties: Record<string, any> = {};
+      const bodyRequired: string[] = [];
+
+      ep.parameters.forEach((param: any) => {
+        if (param.in === 'body') {
+          bodyProperties[param.name] = {
+            type: param.type || 'string',
+            description: param.description || ''
+          };
+          if (param.required) {
+            bodyRequired.push(param.name);
+          }
+        } else {
+          parameters.push({
+            name: param.name,
+            in: param.in,
+            required: param.required,
+            schema: { type: param.type || 'string' },
+            description: param.description || ''
+          });
+        }
+      });
+
+      const operation: any = {
+        summary: ep.description || `Execute ${methodKey.toUpperCase()} ${pathKey}`,
+        responses: {
+          '200': {
+            description: 'Successful response'
+          }
+        }
+      };
+
+      if (parameters.length > 0) {
+        operation.parameters = parameters;
+      }
+
+      if (Object.keys(bodyProperties).length > 0) {
+        operation.requestBody = {
+          required: bodyRequired.length > 0,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: bodyProperties,
+                required: bodyRequired.length > 0 ? bodyRequired : undefined
+              }
+            }
+          }
+        };
+      }
+
+      if (!paths[pathKey]) {
+        paths[pathKey] = {};
+      }
+      paths[pathKey][methodKey] = operation;
+    });
+
+    return {
+      openapi: '3.0.0',
+      info: {
+        title: name,
+        version: '1.0.0',
+        description: `Manually designed API connection for ${name}`
+      },
+      servers: [
+        {
+          url: urlBase || 'http://localhost'
+        }
+      ],
+      paths
+    };
+  };
+
   // Simulation status
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
 
@@ -611,6 +706,37 @@ export default function Dashboard() {
     if (!gatewayName) return;
 
     try {
+      let payload: any = {
+        name: gatewayName,
+        credentialKeyName,
+        credentialValue
+      };
+
+      if (connectMethod === 'manual') {
+        const spec = synthesizeOpenApiSpec(gatewayName, baseUrl, manualEndpoints);
+        const pathsForConfig = manualEndpoints.map((ep) => ({
+          path: ep.path.startsWith('/') ? ep.path : `/${ep.path}`,
+          method: ep.method.toLowerCase(),
+          isEnabled: true,
+          isWritable: ep.method.toLowerCase() !== 'get'
+        }));
+
+        payload = {
+          ...payload,
+          isManual: true,
+          openApiUrl: baseUrl || 'manual',
+          specUrl: baseUrl || 'manual',
+          rawSpec: spec,
+          paths: pathsForConfig
+        };
+      } else {
+        payload = {
+          ...payload,
+          openApiUrl: apiUrl,
+          paths: availablePaths
+        };
+      }
+
       if (!isDemoMode) {
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -622,13 +748,7 @@ export default function Dashboard() {
           method: 'POST',
           headers,
           credentials: 'include',
-          body: JSON.stringify({
-            name: gatewayName,
-            openApiUrl: apiUrl,
-            paths: availablePaths,
-            credentialKeyName,
-            credentialValue
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
@@ -647,8 +767,10 @@ export default function Dashboard() {
         const newGateway: Gateway = {
           id: newId,
           name: gatewayName,
-          openApiUrl: apiUrl,
-          paths: availablePaths,
+          openApiUrl: connectMethod === 'manual' ? (baseUrl || 'manual') : apiUrl,
+          paths: connectMethod === 'manual'
+            ? manualEndpoints.map(ep => ({ path: ep.path, method: ep.method, isEnabled: true, isWritable: ep.method !== 'get' }))
+            : availablePaths,
           credentialKeyName: credentialKeyName || undefined,
           totalRequests: 0,
           averageCompressionRatio: 0,
@@ -1555,56 +1677,380 @@ export default function Dashboard() {
 
             {/* Step 1: URL input and Validator */}
             {wizardStep === 1 && (
-              <form onSubmit={handleValidateUrl} className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
-                    Public OpenAPI Specification URL
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
-                      <Globe className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="url"
-                      required
-                      value={apiUrl}
-                      onChange={(e) => setApiUrl(e.target.value)}
-                      placeholder="e.g. https://petstore.swagger.io/v2/swagger.json"
-                      className="w-full bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-10 py-3 rounded-xl transition duration-200 outline-none text-white placeholder-zinc-650"
-                    />
-                  </div>
-                  <p className="text-[10px] text-zinc-500">
-                    Supports JSON specifications version 2.0 (Swagger) and 3.0+. Standard CORS rules apply.
-                  </p>
-                </div>
-
-                {validationError && (
-                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-start gap-2.5 text-xs text-red-300 font-medium">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                    <span>{validationError}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-end pt-2">
+              <div className="space-y-6 animate-fade-in">
+                {/* Connection Method Selector Tabs */}
+                <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-850 max-w-md">
                   <button
-                    type="submit"
-                    disabled={isValidating || !apiUrl}
-                    className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-bold text-xs rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 cursor-pointer disabled:opacity-40"
+                    type="button"
+                    onClick={() => setConnectMethod('url')}
+                    className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                      connectMethod === 'url'
+                        ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
+                        : 'text-zinc-205'
+                    }`}
                   >
-                    {isValidating ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Validating Spec...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Parse Spec</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </>
-                    )}
+                    Import OpenAPI URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConnectMethod('manual')}
+                    className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                      connectMethod === 'manual'
+                        ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
+                        : 'text-zinc-205'
+                    }`}
+                  >
+                    Manual API Designer
                   </button>
                 </div>
-              </form>
+
+                {connectMethod === 'url' ? (
+                  <form onSubmit={handleValidateUrl} className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-6 md:p-8 space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
+                        Public OpenAPI Specification URL
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                          <Globe className="w-4 h-4" />
+                        </div>
+                        <input
+                          type="url"
+                          required
+                          value={apiUrl}
+                          onChange={(e) => setApiUrl(e.target.value)}
+                          placeholder="e.g. https://petstore.swagger.io/v2/swagger.json"
+                          className="w-full bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-10 py-3 rounded-xl transition duration-200 outline-none text-white placeholder-zinc-650"
+                        />
+                      </div>
+                      <p className="text-[10px] text-zinc-500">
+                        Supports JSON specifications version 2.0 (Swagger) and 3.0+. Standard CORS rules apply.
+                      </p>
+                    </div>
+
+                    {validationError && (
+                      <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-start gap-2.5 text-xs text-red-300 font-medium">
+                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                        <span>{validationError}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="submit"
+                        disabled={isValidating || !apiUrl}
+                        className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-bold text-xs rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 cursor-pointer disabled:opacity-40"
+                      >
+                        {isValidating ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Validating Spec...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Parse Spec</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Manual API Designer Form */}
+                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 md:p-8 space-y-6">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-850 pb-2 flex items-center gap-2">
+                        <Settings className="w-4 h-4 text-cyan-400" /> API Configuration
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
+                            Gateway Connection Name
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={gatewayName}
+                            onChange={(e) => setGatewayName(e.target.value)}
+                            placeholder="e.g. My Custom API"
+                            className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-4 py-2.5 rounded-xl transition duration-200 outline-none text-white font-medium"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
+                            API Base URL
+                          </label>
+                          <input
+                            type="url"
+                            required
+                            value={baseUrl}
+                            onChange={(e) => setBaseUrl(e.target.value)}
+                            placeholder="e.g. https://api.example.com/v1"
+                            className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-4 py-2.5 rounded-xl transition duration-200 outline-none text-white font-medium"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
+                            Auth Header Key (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={credentialKeyName}
+                            onChange={(e) => setCredentialKeyName(e.target.value)}
+                            placeholder="Authorization (e.g. x-rapidapi-key)"
+                            className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-4 py-2.5 rounded-xl transition duration-200 outline-none text-white font-medium"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
+                            Auth Token / Value (Optional)
+                          </label>
+                          <input
+                            type="password"
+                            value={credentialValue}
+                            onChange={(e) => setCredentialValue(e.target.value)}
+                            placeholder="API Key or secret value (will be securely encrypted)"
+                            className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-4 py-2.5 rounded-xl transition duration-200 outline-none text-white font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Endpoints Designer Card */}
+                    <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 md:p-8 space-y-6">
+                      <div className="border-b border-zinc-850 pb-2 flex items-center justify-between">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-cyan-400" /> Endpoints (Model Tools)
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setManualEndpoints([
+                              ...manualEndpoints,
+                              {
+                                path: '',
+                                method: 'get',
+                                description: '',
+                                parameters: []
+                              }
+                            ]);
+                          }}
+                          className="px-3 py-1.5 bg-zinc-850 hover:bg-zinc-800 text-cyan-400 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Endpoint
+                        </button>
+                      </div>
+
+                      {manualEndpoints.length === 0 ? (
+                        <div className="py-8 text-center border border-dashed border-zinc-800 rounded-xl">
+                          <p className="text-xs text-zinc-500">No endpoints designed yet. Click "Add Endpoint" to begin.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {manualEndpoints.map((ep, epIdx) => (
+                            <div key={epIdx} className="bg-zinc-950 border border-zinc-850 rounded-xl p-4 md:p-5 space-y-4 relative">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = manualEndpoints.filter((_, idx) => idx !== epIdx);
+                                  setManualEndpoints(updated);
+                                }}
+                                className="absolute top-4 right-4 text-zinc-500 hover:text-red-400 p-1.5 transition cursor-pointer"
+                                title="Remove Endpoint"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="space-y-1 md:col-span-1">
+                                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Method</label>
+                                  <select
+                                    value={ep.method}
+                                    onChange={(e) => {
+                                      const updated = [...manualEndpoints];
+                                      updated[epIdx].method = e.target.value;
+                                      setManualEndpoints(updated);
+                                    }}
+                                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 text-xs px-3 py-2 rounded-lg outline-none text-white font-semibold"
+                                  >
+                                    <option value="get">GET</option>
+                                    <option value="post">POST</option>
+                                    <option value="put">PUT</option>
+                                    <option value="delete">DELETE</option>
+                                    <option value="patch">PATCH</option>
+                                  </select>
+                                </div>
+
+                                <div className="space-y-1 md:col-span-3">
+                                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Endpoint Path</label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={ep.path}
+                                    onChange={(e) => {
+                                      const updated = [...manualEndpoints];
+                                      updated[epIdx].path = e.target.value;
+                                      setManualEndpoints(updated);
+                                    }}
+                                    placeholder="e.g. /current or /users/{id}"
+                                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 text-xs px-3 py-2 rounded-lg outline-none text-white font-medium"
+                                  />
+                                </div>
+
+                                <div className="space-y-1 md:col-span-4">
+                                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Description</label>
+                                  <input
+                                    type="text"
+                                    value={ep.description}
+                                    onChange={(e) => {
+                                      const updated = [...manualEndpoints];
+                                      updated[epIdx].description = e.target.value;
+                                      setManualEndpoints(updated);
+                                    }}
+                                    placeholder="Summary of what this tool/endpoint does for the LLM"
+                                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 text-xs px-3 py-2 rounded-lg outline-none text-white font-medium"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Parameters Sub-section */}
+                              <div className="space-y-3 pt-3 border-t border-zinc-900">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Parameters Schema</h4>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...manualEndpoints];
+                                      updated[epIdx].parameters.push({
+                                        name: '',
+                                        in: 'query',
+                                        type: 'string',
+                                        required: true,
+                                        description: ''
+                                      });
+                                      setManualEndpoints(updated);
+                                    }}
+                                    className="text-[9px] text-cyan-400 hover:text-cyan-300 font-bold uppercase tracking-wider flex items-center gap-1 transition cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add Parameter
+                                  </button>
+                                </div>
+
+                                {ep.parameters.length === 0 ? (
+                                  <p className="text-[10px] text-zinc-500 italic">No custom inputs defined for this endpoint.</p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {ep.parameters.map((param: any, pIdx: number) => (
+                                      <div key={pIdx} className="grid grid-cols-1 md:grid-cols-6 gap-2 bg-zinc-900 p-2.5 rounded-lg relative pr-10">
+                                        <input
+                                          type="text"
+                                          required
+                                          value={param.name}
+                                          onChange={(e) => {
+                                            const updated = [...manualEndpoints];
+                                            updated[epIdx].parameters[pIdx].name = e.target.value;
+                                            setManualEndpoints(updated);
+                                          }}
+                                          placeholder="Param Name"
+                                          className="bg-zinc-950 border border-zinc-800 text-[11px] px-2 py-1 rounded outline-none text-white md:col-span-1"
+                                        />
+
+                                        <select
+                                          value={param.in}
+                                          onChange={(e) => {
+                                            const updated = [...manualEndpoints];
+                                            updated[epIdx].parameters[pIdx].in = e.target.value;
+                                            setManualEndpoints(updated);
+                                          }}
+                                          className="bg-zinc-950 border border-zinc-800 text-[11px] px-2 py-1 rounded outline-none text-white md:col-span-1"
+                                        >
+                                          <option value="query">Query</option>
+                                          <option value="path">Path</option>
+                                          <option value="body">Body</option>
+                                        </select>
+
+                                        <select
+                                          value={param.type}
+                                          onChange={(e) => {
+                                            const updated = [...manualEndpoints];
+                                            updated[epIdx].parameters[pIdx].type = e.target.value;
+                                            setManualEndpoints(updated);
+                                          }}
+                                          className="bg-zinc-950 border border-zinc-800 text-[11px] px-2 py-1 rounded outline-none text-white md:col-span-1"
+                                        >
+                                          <option value="string">String</option>
+                                          <option value="number">Number</option>
+                                          <option value="boolean">Boolean</option>
+                                        </select>
+
+                                        <div className="flex items-center gap-1 md:col-span-1 px-1">
+                                          <input
+                                            type="checkbox"
+                                            id={`req-${epIdx}-${pIdx}`}
+                                            checked={param.required}
+                                            onChange={(e) => {
+                                              const updated = [...manualEndpoints];
+                                              updated[epIdx].parameters[pIdx].required = e.target.checked;
+                                              setManualEndpoints(updated);
+                                            }}
+                                            className="rounded border-zinc-800 text-cyan-500 focus:ring-0 cursor-pointer"
+                                          />
+                                          <label htmlFor={`req-${epIdx}-${pIdx}`} className="text-[10px] font-semibold text-zinc-400 uppercase select-none cursor-pointer">Required</label>
+                                        </div>
+
+                                        <input
+                                          type="text"
+                                          value={param.description}
+                                          onChange={(e) => {
+                                            const updated = [...manualEndpoints];
+                                            updated[epIdx].parameters[pIdx].description = e.target.value;
+                                            setManualEndpoints(updated);
+                                          }}
+                                          placeholder="Description / Guide"
+                                          className="bg-zinc-950 border border-zinc-800 text-[11px] px-2 py-1 rounded outline-none text-white md:col-span-2"
+                                        />
+
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = [...manualEndpoints];
+                                            updated[epIdx].parameters = updated[epIdx].parameters.filter((_: any, idx: number) => idx !== pIdx);
+                                            setManualEndpoints(updated);
+                                          }}
+                                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-650 hover:text-red-400 p-1 cursor-pointer"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Manual Connect Button */}
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleCreateGateway}
+                        disabled={!gatewayName || !baseUrl || manualEndpoints.some(ep => !ep.path)}
+                        className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 cursor-pointer disabled:opacity-40"
+                      >
+                        <span>Connect & Generate Tools</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Step 2: Paths Grid Selection & Gateway construction */}
