@@ -19,14 +19,16 @@ describe('Cryptography Utility', () => {
       const encrypted = encrypt(plaintext);
 
       // Tamper ciphertext
-      const tamperedData = encrypted.encryptedData.replace(/.$/, 'a');
+      const lastChar = encrypted.encryptedData.slice(-1);
+      const tamperedData = encrypted.encryptedData.slice(0, -1) + (lastChar === 'a' ? 'b' : 'a');
 
       expect(() => {
         decrypt(tamperedData, encrypted.iv, encrypted.tag);
       }).toThrow();
 
       // Tamper tag
-      const tamperedTag = encrypted.tag.replace(/.$/, 'a');
+      const lastTagChar = encrypted.tag.slice(-1);
+      const tamperedTag = encrypted.tag.slice(0, -1) + (lastTagChar === 'a' ? 'b' : 'a');
       expect(() => {
         decrypt(encrypted.encryptedData, encrypted.iv, tamperedTag);
       }).toThrow();
