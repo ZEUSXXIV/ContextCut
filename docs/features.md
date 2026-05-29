@@ -21,7 +21,17 @@ Omni Rest-to-MCP is a premium, enterprise-grade, low-overhead Model Context Prot
 
 ---
 
-## 3. Distributed "Traceparent" Observability Tracing
+## 3. Tabular Object-Oriented Notation (TOON) Serialization Engine
+* **Extreme Semantic Compression**: TOON is a native, lightweight, highly readable notation specifically designed to compress standard nested JSON representations into ultra-compact string blocks optimized for LLM token ingestion.
+* **Smart YAML-style Properties**: Simple key-value primitives are formatted as space-efficient YAML configurations without quotes, unless string values contain control characters, colons (`:`), commas (`,`), or quotes, where it applies secure escaping.
+* **High-Efficiency Tabular Headers**: Arrays consisting of uniform objects (all containing the identical key signatures) are automatically grouped into highly efficient tabular segments: `arrayName[arrayLength]{keys}:` followed by comma-separated raw primitive rows on subsequent lines.
+* **Boolean & Null Conversions**: Translates boolean `true`/`false` into single-character flags `T`/`F`, and maps null properties to `N`, saving invaluable token tokens while maintaining perfect semantic logic.
+* **Failsafe Compact JSON Fallback**: Irregular arrays (non-uniform keys or arrays of primitives) fall back safely to standard compact single-line JSON (`JSON.stringify`) to prevent data corruption.
+* **Multi-Layer Observability**: Telemetry stores and visualizes before-cleaning (`rawResponseBody`), after-cleaning (`optimizedResponseBody`), and final custom encoded TOON strings (`toonResponseBody`) inside the developer analytics console.
+
+---
+
+## 4. Distributed "Traceparent" Observability Tracing
 * **W3C Standard Compliance**: Implements full W3C Trace Context propagation inside the Express proxy layers. Downstream requests carry valid standard trace headers:
   ```http
   traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
@@ -34,23 +44,24 @@ Omni Rest-to-MCP is a premium, enterprise-grade, low-overhead Model Context Prot
 
 ---
 
-## 4. Premium Observability Timeline Explorer Dashboard
+## 5. Premium Observability Timeline Explorer Dashboard
 * **Glassmorphic Analytics UI**: A stunning dark-mode developer console delivering high-level charts, gateway volume tracking, and real-time Token-Saver optimization statistics.
 * **Live Request Tracker**: A console tracking live incoming tool requests with responsive status indicators and quick-view metrics.
 * **Interactive Latency Timeline**: Clicking on any request opens an overlay showing step-by-step processing latency splits:
   1. **LLM Request Trigger** (`0ms`) — Captures model parameters and client session handshakes.
   2. **Omni Proxy Handshake** (`+Xms`) — Salted credential keys decrypted in-memory and custom headers merged.
   3. **REST Downstream API Dispatch** (`+Yms`) — Remote Axios execution with copyable `traceparent` headers.
-  4. **Token-Saver Optimization Cap** (`<1ms`) — Compares original sizes against optimized outputs.
+  4. **Token-Saver Optimization Cap** (`<1ms`) — Compares original sizes against optimized JSON or TOON outputs.
   5. **JSON-RPC Output Delivered** (`Total Latency`) — Transmits the response safely back.
-* **Advanced Telemetry Explorer**: Inspect three tabs of complete payloads:
+* **Advanced Telemetry Explorer**: Inspect four tabs of complete payloads:
   * **Parameters**: Query parameters, headers, and body arguments with **sensitive tokens redacted as `[REDACTED]`**.
   * **Raw Response**: The uncompressed, complete origin REST JSON.
-  * **Optimized Output**: The final compressed output delivered to the LLM.
+  * **Optimized Response**: The final JSON-saver compressed output.
+  * **TOON Format**: The custom compressed Tabular Object-Oriented Notation layout relayed to the model.
 
 ---
 
-## 5. Security Vault & Tenant Session Protection
+## 6. Security Vault & Tenant Session Protection
 * **AES-256-GCM Vault**: Encrypts all third-party REST tokens (e.g., API keys, Authorization headers) at-rest in MongoDB. Encryption utilizes unique IV buffers and authentication tags decrypted solely in-memory.
 * **Tenant Credential Isolation**: Secure multi-tenant architecture ensures developer API keys never bleed or cross boundaries.
 * **Signed Cookie Sessions**: Global `cookie-parser` session enforcement ensures robust authentication guards.
