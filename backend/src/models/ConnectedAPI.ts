@@ -22,6 +22,7 @@ export interface IConnectedAPI extends Document {
   allowedPaths: IPathConfig[];
   tokenSaverConfig: ITokenSaverConfig;
   customHeaders?: Record<string, string>; // Dynamic static headers (e.g. X-Rapidapi-Host)
+  enableToonCompression?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +78,10 @@ const ConnectedAPISchema = new Schema<IConnectedAPI>(
     customHeaders: {
       type: Schema.Types.Mixed,
       default: {},
+    },
+    enableToonCompression: {
+      type: Boolean,
+      default: false,
     },
   },
   {
