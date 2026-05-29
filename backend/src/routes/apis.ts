@@ -397,8 +397,16 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
     if (api.enableToonCompression) {
       try {
         const parsed = JSON.parse(optimizedResponseBodyStr);
-        toonResponseBodyStr = convertToToon(parsed);
-        prunedSize = Buffer.byteLength(toonResponseBodyStr, 'utf8');
+        const toonResult = convertToToon(parsed);
+        const toonSize = Buffer.byteLength(toonResult, 'utf8');
+        const jsonSize = Buffer.byteLength(optimizedResponseBodyStr, 'utf8');
+        if (toonSize < jsonSize) {
+          toonResponseBodyStr = toonResult;
+          prunedSize = toonSize;
+        } else {
+          toonResponseBodyStr = undefined;
+          prunedSize = jsonSize;
+        }
       } catch (e) {
         console.error('Failed simulation TOON conversion:', e);
       }

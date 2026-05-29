@@ -412,15 +412,24 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 rawResponseBodyStr = capTraceBody(response.data);
                 optimizedResponseBodyStr = capTraceBody(optimizedResponse);
 
-                let finalRelayedResponse: string = optimizedResponse;
+                let finalRelayedResponse = optimizedResponse;
 
                 if (matchedApi.enableToonCompression) {
                   try {
                     const parsed = JSON.parse(optimizedResponse);
-                    finalRelayedResponse = convertToToon(parsed);
-                    toonResponseBodyStr = capTraceBody(finalRelayedResponse);
-                    optimizedSize = Buffer.byteLength(finalRelayedResponse, 'utf8');
-                    isToonActive = true;
+                    const toonResult = convertToToon(parsed);
+                    const toonSize = Buffer.byteLength(toonResult, 'utf8');
+                    const jsonSize = Buffer.byteLength(optimizedResponse, 'utf8');
+                    if (toonSize < jsonSize) {
+                      finalRelayedResponse = toonResult;
+                      toonResponseBodyStr = capTraceBody(finalRelayedResponse);
+                      optimizedSize = toonSize;
+                      isToonActive = true;
+                    } else {
+                      finalRelayedResponse = optimizedResponse;
+                      optimizedSize = jsonSize;
+                      isToonActive = false;
+                    }
                   } catch (toonErr) {
                     console.error('Failed to encode response to TOON format:', toonErr);
                   }
