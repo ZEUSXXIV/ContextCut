@@ -8,6 +8,7 @@ import { convertSpecToMCPTools, getToolName } from '../utils/openapiParser';
 import { decrypt } from '../utils/cryptography';
 import { applyTokenSaver } from '../utils/tokenSaver';
 import { RequestTrace } from '../models/RequestTrace';
+import { convertToToon } from '../utils/toonEncoder';
 
 const router = Router();
 
@@ -88,6 +89,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
     const clientStream = session.res;
 
     const { jsonrpc, id, method, params } = req.body;
+    let isToonActive = false;
 
     if (jsonrpc !== '2.0') {
       res.status(400).json({ error: 'Invalid JSON-RPC request format.' });
@@ -409,8 +411,23 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 rawResponseBodyStr = capTraceBody(response.data);
                 optimizedResponseBodyStr = capTraceBody(optimizedResponse);
 
+                let finalRelayedResponse: string = optimizedResponse;
+                let toonResponseBodyStr: string | undefined;
+
+                if (matchedApi.enableToonCompression) {
+                  try {
+                    const parsed = JSON.parse(optimizedResponse);
+                    finalRelayedResponse = convertToToon(parsed);
+                    toonResponseBodyStr = capTraceBody(finalRelayedResponse);
+                    optimizedSize = Buffer.byteLength(finalRelayedResponse, 'utf8');
+                    isToonActive = true;
+                  } catch (toonErr) {
+                    console.error('Failed to encode response to TOON format:', toonErr);
+                  }
+                }
+
                 jsonRpcResponse.result = {
-                  content: [{ type: 'text', text: optimizedResponse }],
+                  content: [{ type: 'text', text: finalRelayedResponse }],
                   isError: response.status >= 400,
                 };
 
@@ -456,6 +473,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 prompt: promptVal,
                 modelName: modelVal,
                 clientName,
+                toonResponseBody: toonResponseBodyStr,
               }).catch(err => console.error('Failed to save request trace:', err));
             }
           }
@@ -471,6 +489,9 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
     // Write back standard JSON-RPC 2.0 response through the SSE stream connection
     clientStream.write(`event: message\ndata: ${JSON.stringify(jsonRpcResponse)}\n\n`);
+    if (isToonActive) {
+      res.setHeader('Content-Type', 'text/toon; charset=utf-8');
+    }
     res.status(200).json({ status: 'sent' });
   } catch (error: any) {
     console.error('Message routing error:', error);
