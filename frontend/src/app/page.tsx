@@ -2241,6 +2241,14 @@ export default function Dashboard() {
                           type="password"
                           value={credentialValue}
                           onChange={(e) => setCredentialValue(e.target.value)}
+                          placeholder="API Key or secret value"
+                          className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-4 py-2.5 rounded-xl transition duration-200 outline-none text-white font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-zinc-500 flex items-center gap-1.5 bg-zinc-950/40 px-3.5 py-2 rounded-xl border border-zinc-850">
                     Security Baseline: Credentials are encrypted via AES-256-GCM both in-transit and at-rest.
                   </p>
 
