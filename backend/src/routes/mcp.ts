@@ -382,6 +382,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
               let rawResponseBodyStr: string | undefined;
               let optimizedResponseBodyStr: string | undefined;
+              let toonResponseBodyStr: string | undefined;
 
               try {
                 const response = await axios({
@@ -412,7 +413,6 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 optimizedResponseBodyStr = capTraceBody(optimizedResponse);
 
                 let finalRelayedResponse: string = optimizedResponse;
-                let toonResponseBodyStr: string | undefined;
 
                 if (matchedApi.enableToonCompression) {
                   try {
