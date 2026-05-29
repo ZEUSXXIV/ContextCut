@@ -47,6 +47,12 @@ interface Gateway {
   _id?: string;
   name: string;
   openApiUrl: string;
+  specUrl?: string;
+  isManual?: boolean;
+  rawSpec?: any;
+  enableToonCompression?: boolean;
+  customHeaders?: Record<string, string>;
+  tokenSaverConfig?: any;
   paths: PathConfig[];
   credentialKeyName?: string;
   totalRequests: number;
@@ -1026,10 +1032,11 @@ export default function Dashboard() {
     setEnableToonCompression(gt.enableToonCompression || false);
 
     // Detect if manual OpenAPI specification definition
-    const isManual = gt.isManual || gt.openApiUrl === 'manual' || !gt.openApiUrl.startsWith('http');
+    const url = gt.specUrl || gt.openApiUrl || '';
+    const isManual = gt.isManual || url === 'manual' || !url || !url.startsWith('http');
     if (isManual) {
       setConnectMethod('manual');
-      setBaseUrl(gt.openApiUrl === 'manual' ? '' : (gt.openApiUrl || ''));
+      setBaseUrl(url === 'manual' ? '' : url);
       
       // Parse header configurations map
       const customHeaders = gt.customHeaders || {};
@@ -1655,8 +1662,8 @@ export default function Dashboard() {
                               <h3 className="text-sm font-bold text-white tracking-wide group-hover:text-cyan-300 transition-colors">
                                 {gt.name}
                               </h3>
-                              <p className="text-[10px] text-zinc-400 max-w-[200px] truncate" title={gt.openApiUrl}>
-                                {gt.openApiUrl}
+                              <p className="text-[10px] text-zinc-400 max-w-[200px] truncate" title={gt.specUrl || gt.openApiUrl}>
+                                {gt.specUrl || gt.openApiUrl}
                               </p>
                             </div>
                             
