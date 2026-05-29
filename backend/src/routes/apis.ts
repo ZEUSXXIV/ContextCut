@@ -113,6 +113,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       rawSpec,
       allowedPaths,
       customHeaders,
+      enableToonCompression: req.body.enableToonCompression === true,
     });
 
     await connectedApi.save();
@@ -211,6 +212,11 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
     // Update basic properties
     if (name) api.name = name;
     if (customHeaders) api.customHeaders = customHeaders;
+
+    const enableToonCompression = req.body.enableToonCompression;
+    if (enableToonCompression !== undefined) {
+      api.enableToonCompression = typeof enableToonCompression === 'boolean' ? enableToonCompression : false;
+    }
 
     // If rawSpec is provided directly (manual definition), update it. Otherwise, standard URL refresh
     const rawSpec = req.body.rawSpec;
