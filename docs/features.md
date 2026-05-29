@@ -22,12 +22,14 @@ Omni Rest-to-MCP is a premium, enterprise-grade, low-overhead Model Context Prot
 ---
 
 ## 3. Tabular Object-Oriented Notation (TOON) Serialization Engine
-* **Extreme Semantic Compression**: TOON is a native, lightweight, highly readable notation specifically designed to compress standard nested JSON representations into ultra-compact string blocks optimized for LLM token ingestion.
+* **Extreme Semantic Context Compression**: TOON is a native, lightweight, highly readable notation specifically designed to compress standard nested JSON representations into ultra-compact string blocks optimized for LLM token ingestion.
 * **Smart YAML-style Properties**: Simple key-value primitives are formatted as space-efficient YAML configurations without quotes, unless string values contain control characters, colons (`:`), commas (`,`), or quotes, where it applies secure escaping.
-* **High-Efficiency Tabular Headers**: Arrays consisting of uniform objects (all containing the identical key signatures) are automatically grouped into highly efficient tabular segments: `arrayName[arrayLength]{keys}:` followed by comma-separated raw primitive rows on subsequent lines.
-* **Boolean & Null Conversions**: Translates boolean `true`/`false` into single-character flags `T`/`F`, and maps null properties to `N`, saving invaluable token tokens while maintaining perfect semantic logic.
-* **Failsafe Compact JSON Fallback**: Irregular arrays (non-uniform keys or arrays of primitives) fall back safely to standard compact single-line JSON (`JSON.stringify`) to prevent data corruption.
+* **Key-Union Tabular Headers (Non-Uniform Arrays)**: Tabular conversion allows **any** array containing solely non-null objects to convert to a space-saving table. It gathers the **union of all keys** present across the items in the array (e.g., `arrayName[arrayLength]{key1,key2,key3}:`) and renders rows as comma-separated values.
+* **Boolean & Missing Field Shortcuts**: Translates boolean `true`/`false` into single-character flags `T`/`F`, and maps null, undefined, or missing object properties in non-uniform arrays to `N` (the null/undefined shortcut), conserving massive prompt context.
+* **Dynamic Byte-Size Comparison Guard**: Compares the final TOON output size against the optimized compact JSON output byte-by-byte. The gateway dynamically keeps the standard compact JSON format if TOON is larger, guaranteeing zero token inflation.
+* **Failsafe JSON Fallback**: Primitive lists (e.g., `[1, 2, 3]`) or empty lists (`[]`) gracefully default to standard compact JSON representations to prevent formatting ambiguities.
 * **Multi-Layer Observability**: Telemetry stores and visualizes before-cleaning (`rawResponseBody`), after-cleaning (`optimizedResponseBody`), and final custom encoded TOON strings (`toonResponseBody`) inside the developer analytics console.
+
 
 ---
 

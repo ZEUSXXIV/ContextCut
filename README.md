@@ -23,6 +23,7 @@ graph TD
 
 *   **⚡ Dynamic OpenAPI Translation**: Connect any OpenAPI-compliant JSON/YAML URL or specification. The gateway compiles paths, schemas, and descriptors on-the-fly into standardized MCP tool definitions (`tools/list`).
 *   **📉 Token-Saver Compression Engine**: Automatically slices massive REST arrays, prunes nested elements beyond maximum depth thresholds, and strips metadata (such as `_links` or `href`), reducing prompt sizes by **70% to 90%** for massive cost savings.
+*   **🗜️ TOON Custom Serialization**: Compresses nested JSON responses into Tabular Object-Oriented Notation (TOON). Formats arrays of objects (uniform or non-uniform) into ultra-compact tabular rows using key unions and the `N` shortcut for missing values. Features a byte-size guard that falls back to JSON if TOON is larger, avoiding token wastage.
 *   **🔭 Traceparent Context Propagation**: Fully implements W3C Trace Context propagation. Every proxied execution carries standard `traceparent` headers downstream, enabling complete distributed OpenTelemetry tracking.
 *   **🧠 Advanced AI Telemetry Extraction**: Captures the orchestrating client program identifier (Cursor/Claude Desktop), active AI model (e.g., `claude-3-5-sonnet`), and the exact prompt intent, logging them in database execution traces.
 *   **🛡️ Secure Symmetric Secrets Vault**: Employs AES-256-GCM symmetric encryption for custom headers and authorization keys. Secrets are decrypted solely in-memory at execution, and database trace logs redact sensitive credentials as `[REDACTED]`.
