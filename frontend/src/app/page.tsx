@@ -29,7 +29,9 @@ import {
   LogOut,
   Mail,
   KeyRound,
-  ChevronLeft
+  ChevronLeft,
+  Zap,
+  TrendingDown
 } from 'lucide-react';
 
 // Interfaces matching backend
@@ -2594,6 +2596,188 @@ export default function Dashboard() {
                     </p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Token Savings Optimization Dashboard */}
+            {selectedTrace.originalSize > 0 && (
+              <div className="bg-gradient-to-br from-zinc-900/90 to-zinc-950/95 border border-zinc-800/80 p-5 rounded-2xl space-y-4 shadow-xl relative overflow-hidden group">
+                {/* Visual glow background decorator */}
+                <div className="absolute -right-24 -top-24 w-48 h-48 rounded-full bg-cyan-500/5 blur-3xl group-hover:bg-cyan-500/10 transition-all duration-500" />
+                <div className="absolute -left-24 -bottom-24 w-48 h-48 rounded-full bg-emerald-500/5 blur-3xl group-hover:bg-emerald-500/10 transition-all duration-500" />
+
+                <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-extrabold flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+                    Token Optimization Analytics
+                  </span>
+                  {(() => {
+                    const finalSize = selectedTrace.prunedSize || 0;
+                    const rawSize = selectedTrace.originalSize || 0;
+                    const savedPct = rawSize > 0 ? Math.round((1 - finalSize / rawSize) * 100) : 0;
+                    return (
+                      <span className="px-2.5 py-1 text-[10px] font-black rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.07)]">
+                        {savedPct}% REDUCTION
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                {(() => {
+                  const rawSize = selectedTrace.originalSize || 0;
+                  const getStringSize = (str: string) => {
+                    if (!str) return 0;
+                    try {
+                      return new Blob([str]).size;
+                    } catch (e) {
+                      return str.length;
+                    }
+                  };
+                  const tokenSaverSize = getStringSize(selectedTrace.optimizedResponseBody);
+                  const toonSize = getStringSize(selectedTrace.toonResponseBody);
+
+                  // Tokens estimation heuristics (English/JSON usually spans ~3.8 characters or bytes per token)
+                  const rawTokens = Math.ceil(rawSize / 3.8);
+                  const tokenSaverTokens = Math.ceil(tokenSaverSize / 3.8);
+                  const toonTokens = toonSize ? Math.ceil(toonSize / 3.8) : 0;
+
+                  const isToonActive = toonSize > 0;
+                  const finalSize = isToonActive ? toonSize : (tokenSaverSize > 0 ? tokenSaverSize : rawSize);
+                  const finalTokens = isToonActive ? toonTokens : (tokenSaverTokens > 0 ? tokenSaverTokens : rawTokens);
+                  const savedTokens = rawTokens - finalTokens;
+                  const savedPct = rawSize > 0 ? Math.round((1 - finalSize / rawSize) * 100) : 0;
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Metric columns */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {/* Raw column */}
+                        <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-900 flex flex-col justify-between">
+                          <div>
+                            <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-bold block">Raw REST Response</span>
+                            <span className="text-zinc-400 text-[10px] block mt-0.5">Uncompressed Data</span>
+                          </div>
+                          <div className="mt-3">
+                            <span className="text-zinc-300 font-extrabold text-lg block">{(rawSize / 1000).toFixed(2)} <span className="text-xs font-semibold">KB</span></span>
+                            <span className="text-zinc-500 font-mono text-[10px] block mt-0.5">≈ {rawTokens.toLocaleString()} tokens</span>
+                          </div>
+                        </div>
+
+                        {/* Token Saver column */}
+                        <div className={`bg-zinc-950/60 p-3 rounded-xl border border-zinc-900 flex flex-col justify-between relative overflow-hidden ${!isToonActive ? 'ring-1 ring-cyan-500/20' : ''}`}>
+                          {!isToonActive && <div className="absolute top-0 right-0 w-1.5 h-full bg-cyan-500" />}
+                          <div>
+                            <span className="text-[9px] uppercase tracking-wider text-cyan-400 font-bold block">Token-Saver Pruning</span>
+                            <span className="text-zinc-400 text-[10px] block mt-0.5">Depth, Slicing & Meta Keys</span>
+                          </div>
+                          <div className="mt-3">
+                            <span className="text-cyan-300 font-extrabold text-lg block">{(tokenSaverSize / 1000).toFixed(2)} <span className="text-xs font-semibold">KB</span></span>
+                            <span className="text-cyan-500/80 font-mono text-[10px] block mt-0.5">≈ {tokenSaverTokens.toLocaleString()} tokens</span>
+                          </div>
+                        </div>
+
+                        {/* TOON Serializer column */}
+                        {isToonActive ? (
+                          <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-900 flex flex-col justify-between relative overflow-hidden ring-1 ring-emerald-500/30">
+                            <div className="absolute top-0 right-0 w-1.5 h-full bg-emerald-500" />
+                            <div>
+                              <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1">
+                                TOON Serialization
+                              </span>
+                              <span className="text-zinc-400 text-[10px] block mt-0.5">Compact Tabular Notation</span>
+                            </div>
+                            <div className="mt-3">
+                              <span className="text-emerald-300 font-extrabold text-lg block">{(toonSize / 1000).toFixed(2)} <span className="text-xs font-semibold">KB</span></span>
+                              <span className="text-emerald-500 font-mono text-[10px] block mt-0.5">≈ {toonTokens.toLocaleString()} tokens</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-zinc-950/30 p-3 rounded-xl border border-zinc-900/60 flex flex-col justify-between border-dashed">
+                            <div>
+                              <span className="text-[9px] uppercase tracking-wider text-zinc-650 font-bold block">TOON Serialization</span>
+                              <span className="text-zinc-650 text-[10px] block mt-0.5">Not Active for connection</span>
+                            </div>
+                            <div className="mt-4 bg-zinc-950/40 p-2 rounded-lg border border-zinc-900/50">
+                              <span className="text-[9px] text-zinc-500 leading-relaxed block">
+                                💡 <span className="text-cyan-400/80 font-semibold">Pro Tip:</span> Enable TOON serialization in Connection Settings to convert JSON lists into CSV tables and save up to 60% more context!
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Comparative visual savings bar */}
+                      <div className="space-y-2 bg-zinc-950/80 border border-zinc-900 p-4 rounded-xl">
+                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
+                          <span className="text-zinc-400">Context Compaction Slider</span>
+                          <span className="text-emerald-400 flex items-center gap-1">
+                            <TrendingDown className="w-3.5 h-3.5" />
+                            {savedTokens.toLocaleString()} TOKENS SAVED ({savedPct}% LESS EXPENDITURE)
+                          </span>
+                        </div>
+
+                        {/* Compression Slider bar */}
+                        <div className="h-4 bg-zinc-900 rounded-full overflow-hidden flex border border-zinc-850 p-[2px] relative">
+                          {/* Raw representation */}
+                          <div className="h-full bg-zinc-800 rounded-full transition-all duration-500" style={{ width: '100%' }}>
+                            <div className="h-full flex items-center pl-3">
+                              <span className="text-[8px] text-zinc-500 font-bold uppercase select-none">Raw Content Bounds</span>
+                            </div>
+                          </div>
+
+                          {/* Token Saver overlay */}
+                          <div 
+                            className="absolute top-[2px] left-[2px] bottom-[2px] bg-gradient-to-r from-cyan-600/90 to-blue-600/90 rounded-full flex items-center justify-end pr-3 transition-all duration-500 shadow-md border-r border-cyan-400/20"
+                            style={{ width: `calc(${Math.max(12, Math.round((tokenSaverSize / rawSize) * 100))}% - 4px)` }}
+                          >
+                            {tokenSaverSize / rawSize < 0.8 && (
+                              <span className="text-[8px] text-white font-extrabold uppercase select-none tracking-wider pr-1">
+                                {Math.round((tokenSaverSize / rawSize) * 100)}%
+                              </span>
+                            )}
+                          </div>
+
+                          {/* TOON overlay */}
+                          {isToonActive && (
+                            <div 
+                              className="absolute top-[2px] left-[2px] bottom-[2px] bg-gradient-to-r from-emerald-500/90 to-teal-500/90 rounded-full flex items-center justify-end pr-3 transition-all duration-500 shadow-lg border-r border-emerald-300/30"
+                              style={{ width: `calc(${Math.max(8, Math.round((toonSize / rawSize) * 100))}% - 4px)` }}
+                            >
+                              {toonSize / rawSize < 0.6 && (
+                                <span className="text-[8px] text-zinc-950 font-black uppercase select-none tracking-wider font-mono">
+                                  TOON {Math.round((toonSize / rawSize) * 100)}%
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-[9px] text-zinc-500 font-mono">
+                          <span>Raw Size: {(rawSize / 1024).toFixed(1)} KB</span>
+                          <span className="flex items-center gap-1 text-cyan-400/90">
+                            Token-Saver size: {(tokenSaverSize / 1024).toFixed(1)} KB
+                          </span>
+                          {isToonActive && (
+                            <span className="text-emerald-400 font-bold">
+                              TOON Output size: {(toonSize / 1024).toFixed(1)} KB
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* savings quote banner */}
+                      <div className="text-[10px] text-zinc-400 leading-relaxed bg-emerald-500/5 border border-emerald-500/10 p-3 rounded-xl flex items-start gap-2.5">
+                        <span className="text-emerald-400 text-xs mt-0.5">🌟</span>
+                        <div>
+                          <p className="font-semibold text-zinc-200">Excellent context footprint reduction!</p>
+                          <p className="text-zinc-500 mt-0.5">
+                            By converting raw data payloads into optimized and {isToonActive ? 'TOON configurations' : 'pruned Token-Saver structures'}, you have saved <span className="text-emerald-400 font-extrabold">{savedTokens.toLocaleString()} tokens</span> for this request. This directly translates to <span className="text-white font-bold">{savedPct}% cheaper downstream prompt processing</span> and guards your LLM against model context window limits.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
