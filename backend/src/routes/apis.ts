@@ -344,7 +344,7 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
 
     const originalSize = Math.floor(Math.random() * 80000) + 1500;
     const compressionRatio = Number((Math.random() * 3 + 2.5).toFixed(2));
-    const prunedSize = Math.floor(originalSize / compressionRatio);
+    let prunedSize = Math.floor(originalSize / compressionRatio);
 
     const latencyOrigin = Math.floor(Math.random() * 200) + 50; // 50-250ms
     const latencyGateway = Math.floor(Math.random() * 15) + 2; // 2-17ms
