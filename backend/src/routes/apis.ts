@@ -7,6 +7,7 @@ import { encrypt } from '../utils/cryptography';
 import { RequestTrace } from '../models/RequestTrace';
 import { getToolName } from '../utils/openapiParser';
 import crypto from 'crypto';
+import { convertToToon } from '../utils/toonEncoder';
 
 const router = Router();
 
@@ -376,6 +377,27 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
     const randomModel = simulatedModels[Math.floor(Math.random() * simulatedModels.length)];
     const randomClient = simulatedClients[Math.floor(Math.random() * simulatedClients.length)];
 
+    let rawResponseBodyStr: string = JSON.stringify({
+      status: "success",
+      count: 2,
+      results: [
+        { id: 1, name: "Sample Item A", available: true },
+        { id: 2, name: "Sample Item B", available: false }
+      ]
+    });
+    let optimizedResponseBodyStr: string = rawResponseBodyStr;
+    let toonResponseBodyStr: string | undefined;
+
+    if (api.enableToonCompression) {
+      try {
+        const parsed = JSON.parse(optimizedResponseBodyStr);
+        toonResponseBodyStr = convertToToon(parsed);
+        prunedSize = Buffer.byteLength(toonResponseBodyStr, 'utf8');
+      } catch (e) {
+        console.error('Failed simulation TOON conversion:', e);
+      }
+    }
+
     const simulatedTrace = await RequestTrace.create({
       traceId: crypto.randomBytes(16).toString('hex'),
       spanId: crypto.randomBytes(8).toString('hex'),
@@ -395,7 +417,10 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
       status: 'SUCCESS',
       prompt: randomPrompt,
       modelName: randomModel,
-      clientName: randomClient
+      clientName: randomClient,
+      rawResponseBody: rawResponseBodyStr,
+      optimizedResponseBody: optimizedResponseBodyStr,
+      toonResponseBody: toonResponseBodyStr
     });
 
     const log = {
