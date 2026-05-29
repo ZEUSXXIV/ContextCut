@@ -77,21 +77,23 @@ describe('TOON Encoder Utility', () => {
     expect(convertToToon(data)).toBe(expected);
   });
 
-  test('should fall back to compact JSON format for irregular or non-uniform arrays', () => {
+  test('should format non-uniform object arrays using the union of keys and fall back for primitive or empty arrays', () => {
     const mixed = {
       name: 'Irregular Data',
-      simpleList: [1, 2, 3], // Primitives, not uniform objects
+      simpleList: [1, 2, 3], // Primitives, not objects -> JSON fallback
       nonUniformList: [
         { id: 1, name: 'Phone' },
-        { sku: 'TAB-2' }, // Different keys
+        { sku: 'TAB-2' }, // Different keys -> key union [id, name, sku]
       ],
-      emptyList: [],
+      emptyList: [], // Empty list -> JSON fallback
     };
 
     const expected = [
       'name: Irregular Data',
       'simpleList: [1,2,3]',
-      'nonUniformList: [{"id":1,"name":"Phone"},{"sku":"TAB-2"}]',
+      'nonUniformList[2]{id,name,sku}:',
+      '  1,Phone,N',
+      '  N,N,TAB-2',
       'emptyList: []',
     ].join('\n');
 

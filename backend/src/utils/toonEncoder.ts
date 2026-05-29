@@ -40,30 +40,27 @@ export function convertToToon(jsonInput: any): string {
     return String(val);
   }
 
-  // Helper to determine if an array represents uniform tabular objects
-  function isUniformArray(arr: any[]): boolean {
+  // Helper to determine if an array represents tabular objects (i.e. every item is a non-null object and not an array)
+  function isTabularArray(arr: any[]): boolean {
     if (!Array.isArray(arr) || arr.length === 0) return false;
     
-    const firstItem = arr[0];
-    if (firstItem === null || typeof firstItem !== 'object' || Array.isArray(firstItem)) {
-      return false;
-    }
-
-    const firstKeys = Object.keys(firstItem);
-    if (firstKeys.length === 0) return false;
-
-    const firstKeysStr = JSON.stringify(firstKeys);
-
-    for (let i = 1; i < arr.length; i++) {
-      const item = arr[i];
+    for (const item of arr) {
       if (item === null || typeof item !== 'object' || Array.isArray(item)) {
-        return false;
-      }
-      if (JSON.stringify(Object.keys(item)) !== firstKeysStr) {
         return false;
       }
     }
     return true;
+  }
+
+  // Gather unique union of all keys across all objects in a tabular array
+  function getUnionOfKeys(arr: any[]): string[] {
+    const keysSet = new Set<string>();
+    for (const item of arr) {
+      for (const k of Object.keys(item)) {
+        keysSet.add(k);
+      }
+    }
+    return Array.from(keysSet);
   }
 
   // Recursive serialization routine
@@ -79,8 +76,11 @@ export function convertToToon(jsonInput: any): string {
         return '[]';
       }
 
-      if (isUniformArray(val)) {
-        const keys = Object.keys(val[0]);
+      if (isTabularArray(val)) {
+        const keys = getUnionOfKeys(val);
+        if (keys.length === 0) {
+          return `${spaces}${JSON.stringify(val)}`;
+        }
         const header = `${spaces}${keyName || 'root'}[${val.length}]{${keys.join(',')}}:`;
         
         const rows = val.map(item => {
@@ -115,8 +115,8 @@ export function convertToToon(jsonInput: any): string {
       if (isPrimitive(v)) {
         lines.push(`${spaces}${k}: ${formatPrimitive(v)}`);
       } else if (Array.isArray(v)) {
-        if (isUniformArray(v)) {
-          // Uniform nested array includes the property header natively
+        if (isTabularArray(v)) {
+          // Tabular nested array includes the property header natively
           lines.push(serialize(v, k, indent));
         } else {
           // Safe compact JSON fallback
