@@ -36,6 +36,7 @@ export interface IRequestTrace extends Document {
   prompt?: string;
   modelName?: string;
   clientName?: string;
+  toonResponseBody?: string;
   
   createdAt: Date;
   updatedAt: Date;
@@ -132,6 +133,9 @@ const RequestTraceSchema = new Schema<IRequestTrace>(
       type: String,
     },
     clientName: {
+      type: String,
+    },
+    toonResponseBody: {
       type: String,
     },
   },
