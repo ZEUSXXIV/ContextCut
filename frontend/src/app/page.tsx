@@ -53,14 +53,36 @@ interface Gateway {
 }
 
 interface RequestLog {
+  id?: string;
+  traceId?: string;
+  spanId?: string;
   timestamp: string;
   gatewayName: string;
   method: string;
   path: string;
+  toolName?: string;
   status: number;
+  traceStatus?: 'SUCCESS' | 'API_ERROR' | 'GATEWAY_ERROR';
+  errorMessage?: string;
+  arguments?: Record<string, any>;
   originalSize: number;
   prunedSize: number;
   compressionRatio: number;
+  latencies?: {
+    total: number;
+    gateway: number;
+    origin: number;
+  };
+  requestHeaders?: Record<string, string>;
+  requestBody?: Record<string, any>;
+  requestQuery?: Record<string, any>;
+  rawResponseBody?: string;
+  optimizedResponseBody?: string;
+  prompt?: string;
+  model?: string;
+  clientName?: string;
+  toonResponseBody?: string;
+  [key: string]: any;
 }
 
 interface Analytics {
@@ -106,6 +128,7 @@ export default function Dashboard() {
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
   const [newGatewayId, setNewGatewayId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedTrace, setSelectedTrace] = useState<any | null>(null);
   const [traceTab, setTraceTab] = useState<'request' | 'raw_response' | 'optimized_response' | 'toon_response'>('request');
   const [enableToonCompression, setEnableToonCompression] = useState<boolean>(false);
 
@@ -1625,9 +1648,9 @@ export default function Dashboard() {
                             </span>
                             <div className="flex items-center gap-1.5">
                               {log.traceStatus === 'SUCCESS' ? (
-                                <CheckCircle2 className="w-3 h-3 text-emerald-400" title="Success Trace" />
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                               ) : (
-                                <AlertCircle className="w-3 h-3 text-red-400 animate-pulse" title="Error Trace" />
+                                <AlertCircle className="w-3 h-3 text-red-400 animate-pulse" />
                               )}
                               <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider ${methodColors[log.method] || 'bg-zinc-800 text-zinc-400'}`}>
                                 {log.method}
