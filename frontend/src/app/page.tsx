@@ -133,6 +133,7 @@ export default function Dashboard() {
   const [selectedTrace, setSelectedTrace] = useState<any | null>(null);
   const [traceTab, setTraceTab] = useState<'request' | 'raw_response' | 'optimized_response' | 'toon_response'>('request');
   const [enableToonCompression, setEnableToonCompression] = useState<boolean>(false);
+  const [editingGateway, setEditingGateway] = useState<Gateway | null>(null);
 
   // Manual API Designer state
   const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
@@ -775,6 +776,13 @@ export default function Dashboard() {
         };
       }
 
+      if (editingGateway) {
+        payload = {
+          ...payload,
+          enableToonCompression
+        };
+      }
+
       if (!isDemoMode) {
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -782,8 +790,14 @@ export default function Dashboard() {
         if (sessionApiKey) {
           headers['Authorization'] = `Bearer ${sessionApiKey}`;
         }
-        const res = await fetch(`${BACKEND_URL}/api/gateways`, {
-          method: 'POST',
+        
+        const isEditing = !!editingGateway;
+        const targetUrl = isEditing 
+          ? `${BACKEND_URL}/api/gateways/${editingGateway._id || editingGateway.id}`
+          : `${BACKEND_URL}/api/gateways`;
+
+        const res = await fetch(targetUrl, {
+          method: isEditing ? 'PUT' : 'POST',
           headers,
           credentials: 'include',
           body: JSON.stringify(payload)
@@ -791,40 +805,69 @@ export default function Dashboard() {
 
         if (!res.ok) {
           const errData = await res.json();
-          throw new Error(errData.error || 'Failed to host gateway.');
+          throw new Error(errData.error || `Failed to ${isEditing ? 'update' : 'host'} gateway.`);
         }
 
         const data = await res.json();
+        alert(isEditing ? 'Connection successfully updated!' : 'Connection successfully hosted!');
+        
         const createdApi = data.connectedApi || data.gateway;
         const newId = createdApi ? (createdApi._id || createdApi.id) : null;
         setNewGatewayId(newId);
+        
+        resetWizard();
+        setActiveTab('dashboard');
         fetchData();
       } else {
-        // Simulated create
-        const newId = 'gt_' + Math.random().toString(36).substr(2, 9);
-        const newGateway: Gateway = {
-          id: newId,
-          name: gatewayName,
-          openApiUrl: connectMethod === 'manual' ? (baseUrl || 'manual') : apiUrl,
-          paths: connectMethod === 'manual'
-            ? manualEndpoints.map(ep => ({ path: ep.path, method: ep.method, isEnabled: true, isWritable: ep.method !== 'get' }))
-            : availablePaths,
-          credentialKeyName: credentialKeyName || undefined,
-          totalRequests: 0,
-          averageCompressionRatio: 0,
-          createdAt: new Date().toISOString()
-        };
+        if (editingGateway) {
+          const updatedGts = gateways.map(g => {
+            const match = g.id === editingGateway.id || g._id === editingGateway.id || (editingGateway._id && g._id === editingGateway._id);
+            if (match) {
+              return {
+                ...g,
+                name: gatewayName,
+                openApiUrl: connectMethod === 'manual' ? (baseUrl || 'manual') : apiUrl,
+                paths: connectMethod === 'manual'
+                  ? manualEndpoints.map(ep => ({ path: ep.path, method: ep.method, isEnabled: true, isWritable: ep.method !== 'get' }))
+                  : availablePaths,
+                credentialKeyName: credentialKeyName || undefined
+              };
+            }
+            return g;
+          });
+          localStorage.setItem('omni_mcp_gateways', JSON.stringify(updatedGts));
+          setGateways(updatedGts);
+          setNewGatewayId(editingGateway.id || editingGateway._id || null);
+          alert('Simulated Connection successfully updated!');
+          resetWizard();
+          setActiveTab('dashboard');
+        } else {
+          // Simulated create
+          const newId = 'gt_' + Math.random().toString(36).substr(2, 9);
+          const newGateway: Gateway = {
+            id: newId,
+            name: gatewayName,
+            openApiUrl: connectMethod === 'manual' ? (baseUrl || 'manual') : apiUrl,
+            paths: connectMethod === 'manual'
+              ? manualEndpoints.map(ep => ({ path: ep.path, method: ep.method, isEnabled: true, isWritable: ep.method !== 'get' }))
+              : availablePaths,
+            credentialKeyName: credentialKeyName || undefined,
+            totalRequests: 0,
+            averageCompressionRatio: 0,
+            createdAt: new Date().toISOString()
+          };
 
-        const localGts = [newGateway, ...gateways];
-        localStorage.setItem('omni_mcp_gateways', JSON.stringify(localGts));
-        setGateways(localGts);
-        setNewGatewayId(newId);
+          const localGts = [newGateway, ...gateways];
+          localStorage.setItem('omni_mcp_gateways', JSON.stringify(localGts));
+          setGateways(localGts);
+          setNewGatewayId(newId);
 
-        // Update analytics counts
-        setAnalytics(prev => ({
-          ...prev,
-          activeConnectionsCount: localGts.length
-        }));
+          // Update analytics counts
+          setAnalytics(prev => ({
+            ...prev,
+            activeConnectionsCount: localGts.length
+          }));
+        }
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred while saving gateway');
@@ -969,6 +1012,102 @@ export default function Dashboard() {
     setCredentialValue('');
     setWizardStep(1);
     setNewGatewayId(null);
+    setEditingGateway(null);
+    setEnableToonCompression(false);
+  };
+
+  const handleStartEditGateway = (gt: any) => {
+    setEditingGateway(gt);
+    
+    // Populate basic fields
+    setGatewayName(gt.name || '');
+    setCredentialKeyName(gt.credentialKeyName || 'Authorization');
+    setCredentialValue(''); // Clear to avoid showing asterisk placeholders
+    setEnableToonCompression(gt.enableToonCompression || false);
+
+    // Detect if manual OpenAPI specification definition
+    const isManual = gt.isManual || gt.openApiUrl === 'manual' || !gt.openApiUrl.startsWith('http');
+    if (isManual) {
+      setConnectMethod('manual');
+      setBaseUrl(gt.openApiUrl === 'manual' ? '' : (gt.openApiUrl || ''));
+      
+      // Parse header configurations map
+      const customHeaders = gt.customHeaders || {};
+      const headersArray = Object.keys(customHeaders).map(key => ({
+        key,
+        value: customHeaders[key]
+      }));
+      setCustomHeadersList(headersArray.length > 0 ? headersArray : [{ key: '', value: '' }]);
+
+      // Deconstruct standard OpenAPI specification back into endpoints designer form
+      const spec = gt.rawSpec || {};
+      const pathsObj = spec.paths || {};
+      const endpointsList: any[] = [];
+
+      Object.keys(pathsObj).forEach(path => {
+        const methods = pathsObj[path];
+        Object.keys(methods).forEach(method => {
+          const methodData = methods[method];
+          const parameters = methodData.parameters || [];
+          
+          // Map body variables
+          const bodyParams: any[] = [];
+          if (methodData.requestBody && methodData.requestBody.content) {
+            const jsonContent = methodData.requestBody.content['application/json'];
+            if (jsonContent && jsonContent.schema && jsonContent.schema.properties) {
+              const props = jsonContent.schema.properties;
+              const reqs = jsonContent.schema.required || [];
+              Object.keys(props).forEach(name => {
+                bodyParams.push({
+                  name,
+                  in: 'body',
+                  type: props[name].type || 'string',
+                  required: reqs.includes(name),
+                  description: props[name].description || ''
+                });
+              });
+            }
+          }
+
+          // Map query/path parameters
+          const otherParams = parameters.map((p: any) => ({
+            name: p.name,
+            in: p.in,
+            type: p.schema?.type || 'string',
+            required: p.required || false,
+            description: p.description || ''
+          }));
+
+          endpointsList.push({
+            path,
+            method: method.toUpperCase(),
+            description: methodData.summary || '',
+            parameters: [...otherParams, ...bodyParams]
+          });
+        });
+      });
+
+      setManualEndpoints(endpointsList.length > 0 ? endpointsList : [
+        {
+          path: '/current',
+          method: 'GET',
+          description: 'Get current information',
+          parameters: [
+            { name: 'city', in: 'query', type: 'string', required: true, description: 'Target city name' }
+          ]
+        }
+      ]);
+
+      setWizardStep(1); // Manual step
+    } else {
+      setConnectMethod('url');
+      setApiUrl(gt.specUrl || gt.openApiUrl || '');
+      setAvailablePaths(gt.paths || []);
+      setWizardStep(2); // URL step 2
+    }
+
+    // Go to Connect tab
+    setActiveTab('connect');
   };
 
   // Routing guard - if not logged in, render the premium glassmorphic Auth views
@@ -1531,6 +1670,13 @@ export default function Dashboard() {
                                 <Play className={`w-3.5 h-3.5 ${isSimulating ? 'animate-spin' : ''}`} />
                               </button>
                               <button
+                                onClick={() => handleStartEditGateway(gt)}
+                                title="Edit Connection"
+                                className="p-1.5 bg-zinc-850/80 hover:bg-cyan-500/20 text-zinc-400 hover:text-cyan-400 border border-zinc-750 rounded-lg transition duration-200 cursor-pointer"
+                              >
+                                <Settings className="w-3.5 h-3.5" />
+                              </button>
+                              <button
                                 onClick={() => handleDeleteGateway(id)}
                                 title="Remove connection"
                                 className="p-1.5 bg-zinc-850/80 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-zinc-750 rounded-lg transition duration-200 cursor-pointer"
@@ -1734,8 +1880,12 @@ export default function Dashboard() {
         {activeTab === 'connect' && (
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
             <div className="border-b border-zinc-800 pb-4">
-              <h2 className="text-lg font-bold tracking-tight text-white">Connect & Host New API Gateway</h2>
-              <p className="text-xs text-zinc-400">Bridge any third-party JSON OpenAPI specification instantly to standard MCP model tools.</p>
+              <h2 className="text-lg font-bold tracking-tight text-white">
+                {editingGateway ? `Edit Connection: ${editingGateway.name}` : 'Connect & Host New API Gateway'}
+              </h2>
+              <p className="text-xs text-zinc-400">
+                {editingGateway ? 'Modify details of your connected API gateway.' : 'Bridge any third-party JSON OpenAPI specification instantly to standard MCP model tools.'}
+              </p>
             </div>
 
             {/* Wizard Steps indicator */}
@@ -1915,6 +2065,12 @@ export default function Dashboard() {
                           <p className="text-[10px] text-zinc-500 leading-normal">
                             Converts response payloads into Tabular Object-Oriented Notation (TOON) to minimize context window consumption by up to 90%.
                           </p>
+                          {enableToonCompression && (
+                            <p className="text-[9px] text-amber-400 font-medium leading-normal mt-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg flex items-start gap-1">
+                              <span>⚠️</span>
+                              <span><strong>Semantic Quality Warning:</strong> TOON removes JSON brackets, array hierarchies, and nested metadata to compress data. While highly token-efficient, it may slightly degrade semantic quality or field parsing on smaller LLMs (like older 8B models). Works best with Sonnet 3.5, GPT-4o, and DeepSeek-V3.</span>
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -2211,7 +2367,7 @@ export default function Dashboard() {
                         disabled={!gatewayName || !baseUrl || manualEndpoints.some(ep => !ep.path)}
                         className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 cursor-pointer disabled:opacity-40"
                       >
-                        <span>Connect & Generate Tools</span>
+                        <span>{editingGateway ? 'Save Connection Updates' : 'Connect & Generate Tools'}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -2293,6 +2449,12 @@ export default function Dashboard() {
                       <p className="text-[10px] text-zinc-500 leading-normal">
                         Converts response payloads into Tabular Object-Oriented Notation (TOON) to minimize context window consumption by up to 90%.
                       </p>
+                      {enableToonCompression && (
+                        <p className="text-[9px] text-amber-400 font-medium leading-normal mt-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg flex items-start gap-1">
+                          <span>⚠️</span>
+                          <span><strong>Semantic Quality Warning:</strong> TOON removes JSON brackets, array hierarchies, and nested metadata to compress data. While highly token-efficient, it may slightly degrade semantic quality or field parsing on smaller LLMs (like older 8B models). Works best with Sonnet 3.5, GPT-4o, and DeepSeek-V3.</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2388,7 +2550,7 @@ export default function Dashboard() {
                     onClick={handleCreateGateway}
                     className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-bold text-xs rounded-xl shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
                   >
-                    <CheckCircle2 className="w-4 h-4 stroke-[2.5]" /> Host Gateway
+                    <CheckCircle2 className="w-4 h-4 stroke-[2.5]" /> {editingGateway ? 'Save Changes' : 'Host Gateway'}
                   </button>
                 </div>
 
