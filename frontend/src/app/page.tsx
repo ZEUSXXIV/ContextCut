@@ -106,8 +106,8 @@ export default function Dashboard() {
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
   const [newGatewayId, setNewGatewayId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [selectedTrace, setSelectedTrace] = useState<any | null>(null);
-  const [traceTab, setTraceTab] = useState<'request' | 'raw_response' | 'optimized_response'>('request');
+  const [traceTab, setTraceTab] = useState<'request' | 'raw_response' | 'optimized_response' | 'toon_response'>('request');
+  const [enableToonCompression, setEnableToonCompression] = useState<boolean>(false);
 
   // Manual API Designer state
   const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
@@ -1874,6 +1874,25 @@ export default function Dashboard() {
                         </div>
                       </div>
 
+                      {/* TOON Option */}
+                      <div className="border-t border-zinc-850/80 pt-4 flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="enableToonManual"
+                          checked={enableToonCompression}
+                          onChange={(e) => setEnableToonCompression(e.target.checked)}
+                          className="w-4.5 h-4.5 rounded border-zinc-800 bg-zinc-950 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer mt-0.5"
+                        />
+                        <div className="space-y-0.5">
+                          <label htmlFor="enableToonManual" className="text-xs font-bold text-zinc-300 uppercase tracking-wider cursor-pointer block">
+                            Enable TOON Tabular Serialization
+                          </label>
+                          <p className="text-[10px] text-zinc-500 leading-normal">
+                            Converts response payloads into Tabular Object-Oriented Notation (TOON) to minimize context window consumption by up to 90%.
+                          </p>
+                        </div>
+                      </div>
+
                       {/* Static Custom Headers Sub-section */}
                       <div className="pt-4 border-t border-zinc-850/80 space-y-3">
                         <div className="flex items-center justify-between">
@@ -2222,16 +2241,27 @@ export default function Dashboard() {
                           type="password"
                           value={credentialValue}
                           onChange={(e) => setCredentialValue(e.target.value)}
-                          placeholder="••••••••••••••"
-                          className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm px-4 py-2.5 rounded-xl transition duration-200 outline-none text-white font-medium"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-zinc-500 flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-cyan-400" />
                     Security Baseline: Credentials are encrypted via AES-256-GCM both in-transit and at-rest.
                   </p>
+
+                  {/* TOON Option */}
+                  <div className="border-t border-zinc-850 pt-4 flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="enableToon"
+                      checked={enableToonCompression}
+                      onChange={(e) => setEnableToonCompression(e.target.checked)}
+                      className="w-4.5 h-4.5 rounded border-zinc-800 bg-zinc-950 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer mt-0.5"
+                    />
+                    <div className="space-y-0.5">
+                      <label htmlFor="enableToon" className="text-xs font-bold text-zinc-300 uppercase tracking-wider cursor-pointer block">
+                        Enable TOON Tabular Serialization
+                      </label>
+                      <p className="text-[10px] text-zinc-500 leading-normal">
+                        Converts response payloads into Tabular Object-Oriented Notation (TOON) to minimize context window consumption by up to 90%.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Paths selection grid */}
@@ -2709,6 +2739,19 @@ export default function Dashboard() {
                 >
                   Optimized Response
                 </button>
+                {selectedTrace.toonResponseBody && (
+                  <button
+                    type="button"
+                    onClick={() => setTraceTab('toon_response')}
+                    className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                      traceTab === 'toon_response'
+                        ? 'bg-zinc-800/80 text-cyan-400 font-extrabold shadow-sm'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    TOON Format
+                  </button>
+                )}
               </div>
 
               {/* Tab Content 1: Request Details */}
@@ -2794,6 +2837,16 @@ export default function Dashboard() {
                         return selectedTrace.optimizedResponseBody;
                       }
                     })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab Content 4: TOON Format */}
+              {traceTab === 'toon_response' && selectedTrace.toonResponseBody && (
+                <div className="space-y-1.5 animate-fade-in">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold block">Tabular Object-Oriented Notation (TOON) Output</span>
+                  <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-2xl max-h-[200px] overflow-y-auto custom-scrollbar font-mono text-[10px] text-cyan-400 select-all leading-relaxed whitespace-pre">
+                    {selectedTrace.toonResponseBody}
                   </div>
                 </div>
               )}
