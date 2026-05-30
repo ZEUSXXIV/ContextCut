@@ -199,6 +199,132 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
             query._id = gatewayId;
           }
           const apis = await ConnectedAPI.find(query);
+
+          // Check if it is a dynamic schema helper tool call
+          let isSchemaToolCall = false;
+          let schemaToolTargetApi: any = null;
+
+          for (const api of apis) {
+            const specTitle = api.rawSpec?.info?.title || api.name || 'api';
+            const cleanTitle = specTitle.toLowerCase().replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            const schemaToolName = `get_${cleanTitle}_schema`;
+            if (name === schemaToolName) {
+              isSchemaToolCall = true;
+              schemaToolTargetApi = api;
+              break;
+            }
+          }
+
+          if (isSchemaToolCall) {
+            const targetPath = args?.path;
+            const targetMethod = args?.method?.toLowerCase();
+
+            if (!targetPath || !targetMethod) {
+              jsonRpcResponse.result = {
+                content: [{ type: 'text', text: "Error: Both 'path' and 'method' parameters are required to retrieve the schema." }],
+                isError: true
+              };
+            } else {
+              // Retrieve matching path config to make sure it's enabled and accessible
+              const config = schemaToolTargetApi.allowedPaths.find(
+                (p: any) => p.path === targetPath && p.method.toLowerCase() === targetMethod
+              );
+
+              if (!config || !config.isEnabled) {
+                jsonRpcResponse.result = {
+                  content: [{ type: 'text', text: `Error: The endpoint '${targetMethod.toUpperCase()} ${targetPath}' does not exist or is disabled in this connection.` }],
+                  isError: true
+                };
+              } else {
+                // Retrieve the schema details from the spec
+                const spec = schemaToolTargetApi.rawSpec;
+                const pathItem = spec?.paths?.[config.path];
+                const operation = pathItem?.[config.method];
+
+                if (!operation) {
+                  jsonRpcResponse.result = {
+                    content: [{ type: 'text', text: `Error: Schema not defined for '${targetMethod.toUpperCase()} ${targetPath}' inside the OpenAPI specification.` }],
+                    isError: true
+                  };
+                } else {
+                  // Extract requestBody schema
+                  let requestBodySchema: any = null;
+                  if (operation.requestBody && typeof operation.requestBody === 'object') {
+                    const content = operation.requestBody.content || {};
+                    const jsonContent = content['application/json'];
+                    if (jsonContent && jsonContent.schema) {
+                      requestBodySchema = jsonContent.schema;
+                    }
+                  }
+
+                  // Extract parameters (Query, Path, Headers)
+                  const parameters = operation.parameters || [];
+                  const queryParams = parameters.filter((p: any) => p.in === 'query');
+                  const pathParams = parameters.filter((p: any) => p.in === 'path');
+                  const headerParams = parameters.filter((p: any) => p.in === 'header');
+
+                  // Format a highly detailed, readable markdown summary of the requirements
+                  let responseText = `### Schema Requirements for '${targetMethod.toUpperCase()} ${targetPath}'\n\n`;
+                  responseText += `* **Summary:** ${operation.summary || 'None'}\n`;
+                  responseText += `* **Description:** ${operation.description || 'None'}\n\n`;
+
+                  if (pathParams.length > 0) {
+                    responseText += `**Path Parameters:**\n`;
+                    pathParams.forEach((p: any) => {
+                      responseText += `- \`${p.name}\` (${p.schema?.type || 'string'})${p.required ? ' *Required*' : ''}: ${p.description || 'None'}\n`;
+                    });
+                    responseText += `\n`;
+                  }
+
+                  if (queryParams.length > 0) {
+                    responseText += `**Query Parameters:**\n`;
+                    queryParams.forEach((p: any) => {
+                      responseText += `- \`${p.name}\` (${p.schema?.type || 'string'})${p.required ? ' *Required*' : ''}: ${p.description || 'None'}\n`;
+                    });
+                    responseText += `\n`;
+                  }
+
+                  if (requestBodySchema) {
+                    responseText += `**JSON Request Body Schema (application/json):**\n\`\`\`json\n${JSON.stringify(requestBodySchema, null, 2)}\n\`\`\`\n`;
+                  } else {
+                    responseText += `**Request Body:** No JSON request body is required for this endpoint.\n`;
+                  }
+
+                  jsonRpcResponse.result = {
+                    content: [{ type: 'text', text: responseText }]
+                  };
+                }
+              }
+            }
+
+            // Log trace telemetry for schema tool call
+            const traceId = crypto.randomBytes(16).toString('hex');
+            const spanId = crypto.randomBytes(8).toString('hex');
+            await RequestTrace.create({
+              traceId,
+              spanId,
+              user: req.user._id,
+              gateway: schemaToolTargetApi._id,
+              gatewayName: schemaToolTargetApi.name,
+              method: 'GET',
+              path: `/schema${targetPath}`,
+              toolName: name,
+              status: 200,
+              originalSize: JSON.stringify(req.body).length,
+              prunedSize: JSON.stringify(jsonRpcResponse.result).length,
+              compressionRatio: 0,
+              latencies: { total: 5, gateway: 5, origin: 0 },
+              prompt: promptVal || `Retrieve schema for ${targetMethod?.toUpperCase()} ${targetPath}`,
+              model: modelVal || 'internal',
+              clientName: clientName || 'MCP Client'
+            });
+
+            // Stream RPC response back and end HTTP message
+            clientStream.write(`data: ${JSON.stringify(jsonRpcResponse)}\n\n`);
+            res.json({ status: 'success' });
+            return;
+          }
+
           let matchedApi: any = null;
           let matchedPathConfig: any = null;
 

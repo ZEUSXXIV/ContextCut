@@ -177,5 +177,30 @@ export function convertSpecToMCPTools(spec: any, pathConfigs: PathConfig[]): MCP
     });
   }
 
+  // Inject default schema helper tool
+  const specTitle = spec.info?.title || 'api';
+  const cleanTitle = specTitle.toLowerCase().replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const schemaToolName = `get_${cleanTitle}_schema`;
+
+  tools.push({
+    name: schemaToolName,
+    description: `Retrieve the detailed JSON request body schema and parameter requirements of any active endpoint in the '${specTitle}' connection. Use this tool if you need to call a POST/PUT/PATCH endpoint but are unsure of the required fields, nested object datatypes, or JSON payload structures.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: "The exact endpoint path to retrieve the schema for (e.g. '/items/bulk' or '/items')"
+        },
+        method: {
+          type: 'string',
+          description: "The HTTP method of the endpoint (e.g. 'POST', 'GET', 'PUT', 'DELETE')",
+          enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'get', 'post', 'put', 'delete', 'patch']
+        }
+      },
+      required: ['path', 'method']
+    }
+  });
+
   return tools;
 }
