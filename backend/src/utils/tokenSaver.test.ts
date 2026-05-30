@@ -57,6 +57,35 @@ describe('Token-Saver Utility', () => {
     expect(result.level2.level3.level4.level5).toEqual('[Max Depth Reached]');
   });
 
+  test('should not increment depth for arrays but should for objects inside arrays', () => {
+    const customConfig: TokenSaverConfig = {
+      maxDepth: 4,
+      maxArrayLength: 50,
+      maxCharCap: 50000,
+      stripMetadataKeys: []
+    };
+
+    // Root (depth 1) -> level2 (depth 2) -> array (transparent) -> level3 (depth 3) -> level4 (depth 4) -> level5 (depth 5, pruned)
+    const input = {
+      level2: [
+        {
+          level3: {
+            level4: {
+              level5: {
+                data: 'hidden'
+              }
+            }
+          }
+        }
+      ]
+    };
+
+    const result = cleanAndPrune(input, customConfig);
+    expect(result.level2[0].level3.level4.level5).toEqual('[Max Depth Reached]');
+    expect(result.level2[0].level3.level4).toBeDefined();
+    expect(result.level2[0].level3.level4).not.toEqual('[Max Depth Reached]');
+  });
+
   test('should apply character capping and append warning snippet', () => {
     const input = {
       message: 'This is a very long message that will definitely exceed the limit of 100 characters in the final string representation.'

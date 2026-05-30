@@ -39,7 +39,7 @@ const PathConfigSchema = new Schema<IPathConfig>({
 });
 
 const TokenSaverConfigSchema = new Schema<ITokenSaverConfig>({
-  maxDepth: { type: Number, required: true, default: 4 },
+  maxDepth: { type: Number, required: true, default: 10 },
   maxArrayLength: { type: Number, required: true, default: 50 },
   maxCharCap: { type: Number, required: true, default: 50000 },
   stripMetadataKeys: {

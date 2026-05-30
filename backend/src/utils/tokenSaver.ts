@@ -6,7 +6,7 @@ export interface TokenSaverConfig {
 }
 
 export const DEFAULT_TOKEN_SAVER_CONFIG: TokenSaverConfig = {
-  maxDepth: 4,
+  maxDepth: 10,
   maxArrayLength: 50,
   maxCharCap: 50000,
   stripMetadataKeys: ['traceId', 'requestId', 'spanId', 'x-request-id', 'correlationId']
@@ -47,7 +47,7 @@ export function cleanAndPrune(
 
     const cleanedArray: any[] = [];
     for (const item of sliced) {
-      const cleanedItem = cleanAndPrune(item, config, currentDepth + 1);
+      const cleanedItem = cleanAndPrune(item, config, currentDepth);
       if (cleanedItem !== undefined) {
         cleanedArray.push(cleanedItem);
       }
