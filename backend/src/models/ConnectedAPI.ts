@@ -5,6 +5,8 @@ export interface IPathConfig {
   method: string;
   isEnabled: boolean;
   isWritable: boolean;
+  enableToon?: boolean;
+  customDescription?: string;
 }
 
 export interface ITokenSaverConfig {
@@ -32,6 +34,8 @@ const PathConfigSchema = new Schema<IPathConfig>({
   method: { type: String, required: true },
   isEnabled: { type: Boolean, required: true, default: true },
   isWritable: { type: Boolean, required: true, default: false },
+  enableToon: { type: Boolean, required: true, default: false },
+  customDescription: { type: String, required: false },
 });
 
 const TokenSaverConfigSchema = new Schema<ITokenSaverConfig>({
