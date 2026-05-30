@@ -47,9 +47,39 @@ export function ConnectWizard() {
         }
       }
 
-      if (parsed.credentialKeyName && parsed.credentialValue) {
-        setCredentialKeyName(parsed.credentialKeyName);
-        setCredentialValue(parsed.credentialValue);
+      // Map security credentials and static custom headers
+      const customHeaders: Array<{ key: string, value: string }> = [];
+      let foundCredKey = '';
+      let foundCredVal = '';
+
+      const authKeys = ['authorization', 'x-api-key', 'apikey', 'x-rapidapi-key'];
+
+      if (parsed.headers) {
+        Object.keys(parsed.headers).forEach((k) => {
+          const lowerK = k.toLowerCase();
+          // Skip content-type and accept headers as they are set automatically by the proxy handler
+          if (lowerK === 'content-type' || lowerK === 'accept') {
+            return;
+          }
+
+          // Map standard API keys to credentials first
+          if (authKeys.includes(lowerK) && !foundCredKey) {
+            foundCredKey = k;
+            foundCredVal = parsed.headers[k];
+          } else {
+            customHeaders.push({ key: k, value: parsed.headers[k] });
+          }
+        });
+      }
+
+      if (foundCredKey && foundCredVal) {
+        setCredentialKeyName(foundCredKey);
+        setCredentialValue(foundCredVal);
+      }
+
+      // Add parsed headers to custom headers list
+      if (customHeaders.length > 0) {
+        setCustomHeadersList([...customHeadersList, ...customHeaders]);
       }
 
       const newEndpoint = {

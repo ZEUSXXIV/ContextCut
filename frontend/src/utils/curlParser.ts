@@ -230,7 +230,7 @@ export function parseCurl(curlCommand: string): ParsedCurl | null {
   let credentialValue: string | undefined;
 
   const authHeaderKeys = Object.keys(headers).filter(
-    (k) => k.toLowerCase() === 'authorization' || k.toLowerCase() === 'x-api-key' || k.toLowerCase() === 'apikey'
+    (k) => k.toLowerCase() === 'authorization' || k.toLowerCase() === 'x-api-key' || k.toLowerCase() === 'apikey' || k.toLowerCase() === 'x-rapidapi-key'
   );
 
   if (authHeaderKeys.length > 0) {
