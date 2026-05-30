@@ -78,8 +78,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [gateways, setGateways] = useState<Gateway[]>([]);
   const [analytics, setAnalytics] = useState<Analytics>({
-    totalRequests: 1584,
-    averageCompressionRatio: 4.15,
+    totalRequests: 0,
+    averageCompressionRatio: 0,
     activeConnectionsCount: 0,
     liveRequestTracker: []
   });
@@ -339,7 +339,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     }
 
     // Compute sums for demo dashboard
-    let totalReqs = 1584;
+    let totalReqs = 0;
     let ratioSum = 0;
     localGateways.forEach(g => {
       totalReqs += g.totalRequests;
@@ -955,7 +955,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
         localStorage.setItem('omni_mcp_logs', JSON.stringify(cappedLogs));
 
         // Recompute sums
-        let totalReqs = 1584;
+        let totalReqs = 0;
         let ratioSum = 0;
         updatedGts.forEach(g => {
           totalReqs += g.totalRequests;
