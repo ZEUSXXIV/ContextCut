@@ -6,8 +6,10 @@ import {
   Wifi, AlertCircle, Terminal, X, Copy, Check, RefreshCw, LogOut, Mail, KeyRound,
   ChevronLeft, Zap, TrendingDown
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function ConnectWizard() {
+  const router = useRouter();
   const { activeTab, setActiveTab, isBackendConnected, setIsBackendConnected, isDemoMode, setIsDemoMode, gateways, setGateways, analytics, setAnalytics, user, setUser, sessionApiKey, setSessionApiKey, apiUrl, setApiUrl, gatewayName, setGatewayName, isValidating, setIsValidating, validationError, setValidationError, availablePaths, setAvailablePaths, credentialKeyName, setCredentialKeyName, credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId, copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab, enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway, connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList, manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec, pathKey, methodKey, simulatingId, setSimulatingId, BACKEND_URL, fetchData, loadDemoData, checkSession, handleLogout, handleValidateUrl, togglePathEnabled, togglePathWritable, handleCreateGateway, handleDeleteGateway, handleSimulateRequest, copyToClipboard, resetWizard, handleStartEditGateway, } = useDashboard();
 
   return (
@@ -760,8 +762,8 @@ export function ConnectWizard() {
                 <div className="flex justify-center gap-4 pt-4 border-t border-zinc-850">
                   <button
                     onClick={() => {
-                      setActiveTab('dashboard');
                       setNewGatewayId(null);
+                      router.push('/dashboard');
                     }}
                     className="px-5 py-2.5 bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 text-xs font-semibold rounded-xl text-zinc-200 transition duration-200 cursor-pointer"
                   >

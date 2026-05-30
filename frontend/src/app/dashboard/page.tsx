@@ -105,7 +105,10 @@ import { LiveRequestTracker } from '../../components/LiveRequestTracker';
 import { ConnectWizard } from '../../components/ConnectWizard';
 import { TraceparentModal } from '../../components/TraceparentModal';
 
+import { useRouter } from 'next/navigation';
+
 function DashboardContent() {
+  const router = useRouter();
   const { activeTab, setActiveTab, isBackendConnected, setIsBackendConnected, isDemoMode, setIsDemoMode, gateways, setGateways, analytics, setAnalytics, user, setUser, sessionApiKey, setSessionApiKey, apiUrl, setApiUrl, gatewayName, setGatewayName, isValidating, setIsValidating, validationError, setValidationError, availablePaths, setAvailablePaths, credentialKeyName, setCredentialKeyName, credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId, copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab, enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway, connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList, manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec, simulatingId, setSimulatingId, BACKEND_URL, fetchData, loadDemoData, checkSession, handleLogout, handleValidateUrl, togglePathEnabled, togglePathWritable, handleCreateGateway, handleDeleteGateway, handleSimulateRequest, copyToClipboard, resetWizard, handleStartEditGateway, } = useDashboard();
   
   // Loaded & Authenticated Dashboard Render
@@ -158,7 +161,7 @@ function DashboardContent() {
             <nav className="flex bg-zinc-900/90 border border-zinc-800/80 p-1 rounded-xl">
               <button
                 onClick={() => {
-                  setActiveTab('dashboard');
+                  router.push('/dashboard');
                   setNewGatewayId(null);
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-300 ${
@@ -172,8 +175,8 @@ function DashboardContent() {
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('connect');
                   resetWizard();
+                  router.push('/dashboard/connect');
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-300 ${
                   activeTab === 'connect'
@@ -296,8 +299,8 @@ function DashboardContent() {
                   </div>
                   <button
                     onClick={() => {
-                      setActiveTab('connect');
                       resetWizard();
+                      router.push('/dashboard/connect');
                     }}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-semibold text-xs rounded-xl shadow-md transition-all duration-300 cursor-pointer"
                   >
@@ -317,7 +320,10 @@ function DashboardContent() {
                       </p>
                     </div>
                     <button
-                      onClick={() => setActiveTab('connect')}
+                      onClick={() => {
+                        resetWizard();
+                        router.push('/dashboard/connect');
+                      }}
                       className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 text-xs font-semibold rounded-xl text-cyan-400 transition duration-200 cursor-pointer"
                     >
                       Connect New API Spec
@@ -356,7 +362,10 @@ function DashboardContent() {
                                 <Play className={`w-3.5 h-3.5 ${isSimulating ? 'animate-spin' : ''}`} />
                               </button>
                               <button
-                                onClick={() => handleStartEditGateway(gt)}
+                                onClick={() => {
+                                  handleStartEditGateway(gt);
+                                  router.push('/dashboard/connect');
+                                }}
                                 title="Edit Connection"
                                 className="p-1.5 bg-zinc-850/80 hover:bg-cyan-500/20 text-zinc-400 hover:text-cyan-400 border border-zinc-750 rounded-lg transition duration-200 cursor-pointer"
                               >
@@ -474,9 +483,5 @@ function DashboardContent() {
 
 
 export default function Dashboard() {
-  return (
-    <DashboardProvider>
-      <DashboardContent />
-    </DashboardProvider>
-  );
+  return <DashboardContent />;
 }
