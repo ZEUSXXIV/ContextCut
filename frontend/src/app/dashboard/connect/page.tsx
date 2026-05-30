@@ -48,13 +48,13 @@ export default function ConnectPage() {
             <div>
               <div className="flex items-center gap-2.5">
                 <Link href="/dashboard" className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
-                  Omni MCP Gateway
+                  ContextCut
                 </Link>
                 <span className="text-[10px] uppercase font-semibold px-2 py-0.5 bg-zinc-800 text-zinc-400 border border-zinc-700 rounded">
                   v1.2.0
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 font-medium">Dynamic OpenAPI to Model Context Protocol Adapter</p>
+              <p className="text-xs text-zinc-500 font-medium">Enterprise OpenAPI to Model Context Protocol Adapter</p>
             </div>
           </div>
 
@@ -102,10 +102,45 @@ export default function ConnectPage() {
         <ConnectWizard />
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-850/80 bg-zinc-950/20 py-6 text-center text-xs text-zinc-650 font-medium select-none relative z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Omni MCP Gateway Corporation. All rights reserved.</p>
+      {/* Premium Informational Footer */}
+      <footer className="border-t border-zinc-850/80 bg-zinc-950/60 py-10 text-xs text-zinc-500 relative z-10 font-sans mt-8 w-full">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 text-left">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-zinc-200 font-black tracking-tight">
+              <Cpu className="w-5 h-5 text-cyan-400" />
+              <span>ContextCut</span>
+            </div>
+            <p className="text-[11px] text-zinc-500 leading-relaxed">
+              Enterprise gateway federation engine and real-time observability proxy translating custom OpenAPI REST endpoints into token-optimized Model Context Protocol capabilities.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Security & Cryptography</span>
+            <ul className="space-y-2 text-[11px]">
+              <li className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-emerald-500" /> AES-256-GCM Token Vault</li>
+              <li className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-cyan-500" /> Cryptographic Signed Session</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-purple-500" /> In-Memory Decryption Redaction</li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Context Compaction</span>
+            <ul className="space-y-2 text-[11px]">
+              <li className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-emerald-400" /> Token-Saver Array Slicing</li>
+              <li className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-400" /> Tabular TOON Compression</li>
+              <li className="flex items-center gap-1.5"><TrendingDown className="w-3.5 h-3.5 text-cyan-400" /> Up to 90% Context Savings</li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Specifications & Compliance</span>
+            <ul className="space-y-2 text-[11px] text-zinc-400">
+              <li>• OpenAPI / Swagger spec 2.0 & 3.0+</li>
+              <li>• Model Context Protocol (MCP) spec v1.0</li>
+              <li>• W3C Traceparent Trace Context standards</li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 border-t border-zinc-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 ContextCut Gateway Federation Corporation. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <a href="https://nextjs.org" className="hover:text-zinc-400 transition">Next.js Framework</a>
             <span>•</span>
