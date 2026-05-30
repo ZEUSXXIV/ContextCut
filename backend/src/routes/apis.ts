@@ -100,6 +100,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         method: p.method,
         isEnabled: typeof p.isEnabled === 'boolean' ? p.isEnabled : true,
         isWritable: typeof p.isWritable === 'boolean' ? p.isWritable : false,
+        enableToon: typeof p.enableToon === 'boolean' ? p.enableToon : false,
+        customDescription: typeof p.customDescription === 'string' ? p.customDescription : undefined,
       }));
     } else {
       allowedPaths = getAvailablePathsFromSpec(rawSpec);
@@ -244,6 +246,8 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
         method: p.method,
         isEnabled: typeof p.isEnabled === 'boolean' ? p.isEnabled : true,
         isWritable: typeof p.isWritable === 'boolean' ? p.isWritable : false,
+        enableToon: typeof p.enableToon === 'boolean' ? p.enableToon : false,
+        customDescription: typeof p.customDescription === 'string' ? p.customDescription : undefined,
       }));
     }
 
