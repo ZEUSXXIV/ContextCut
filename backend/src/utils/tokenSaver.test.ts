@@ -86,6 +86,18 @@ describe('Token-Saver Utility', () => {
     expect(result.level2[0].level3.level4).not.toEqual('[Max Depth Reached]');
   });
 
+  test('should handle empty or partial config gracefully using default fallbacks', () => {
+    const input = {
+      message: 'test data',
+      traceId: 'strip-me'
+    };
+    // Call with empty config
+    const resultJson = applyTokenSaver(input, {} as any);
+    const parsed = JSON.parse(resultJson);
+    expect(parsed.message).toEqual('test data');
+    expect(parsed.traceId).toBeUndefined(); // fell back to strip traceId from DEFAULT_TOKEN_SAVER_CONFIG
+  });
+
   test('should apply character capping and append warning snippet', () => {
     const input = {
       message: 'This is a very long message that will definitely exceed the limit of 100 characters in the final string representation.'
