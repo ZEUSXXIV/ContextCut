@@ -414,7 +414,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
 
                 let finalRelayedResponse = optimizedResponse;
 
-                if (matchedApi.enableToonCompression) {
+                if (matchedApi.enableToonCompression || matchedPathConfig.enableToon) {
                   try {
                     const parsed = JSON.parse(optimizedResponse);
                     const toonResult = convertToToon(parsed);
