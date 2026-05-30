@@ -7,10 +7,72 @@ import {
   ChevronLeft, Zap, TrendingDown
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { parseCurl } from '../utils/curlParser';
 
 export function ConnectWizard() {
   const router = useRouter();
   const { activeTab, setActiveTab, isBackendConnected, setIsBackendConnected, isDemoMode, setIsDemoMode, gateways, setGateways, analytics, setAnalytics, user, setUser, sessionApiKey, setSessionApiKey, apiUrl, setApiUrl, gatewayName, setGatewayName, isValidating, setIsValidating, validationError, setValidationError, availablePaths, setAvailablePaths, credentialKeyName, setCredentialKeyName, credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId, copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab, enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway, connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList, manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec, pathKey, methodKey, simulatingId, setSimulatingId, BACKEND_URL, fetchData, loadDemoData, checkSession, handleLogout, handleValidateUrl, togglePathEnabled, togglePathWritable, togglePathToon, updatePathDescription, handleCreateGateway, handleDeleteGateway, handleSimulateRequest, copyToClipboard, resetWizard, handleStartEditGateway, } = useDashboard();
+
+  const [showCurlModal, setShowCurlModal] = React.useState(false);
+  const [curlInput, setCurlInput] = React.useState('');
+  const [curlError, setCurlError] = React.useState('');
+
+  const handleImportCurl = () => {
+    if (!curlInput.trim()) {
+      setCurlError('Please paste a cURL command.');
+      return;
+    }
+
+    try {
+      const parsed = parseCurl(curlInput);
+      if (!parsed) {
+        setCurlError('Failed to parse cURL. Make sure it is a valid "curl" command.');
+        return;
+      }
+
+      if (parsed.baseUrl) {
+        setBaseUrl(parsed.baseUrl);
+        try {
+          const parsedUrl = new URL(parsed.baseUrl);
+          const hostParts = parsedUrl.host.split('.');
+          const domain = hostParts.length >= 2 ? hostParts[hostParts.length - 2] : hostParts[0];
+          const niceName = domain.charAt(0).toUpperCase() + domain.slice(1) + ' API';
+          if (!gatewayName) {
+            setGatewayName(niceName);
+          }
+        } catch (_) {
+          if (!gatewayName) {
+            setGatewayName('cURL Connection');
+          }
+        }
+      }
+
+      if (parsed.credentialKeyName && parsed.credentialValue) {
+        setCredentialKeyName(parsed.credentialKeyName);
+        setCredentialValue(parsed.credentialValue);
+      }
+
+      const newEndpoint = {
+        path: parsed.path || '/',
+        method: parsed.method.toLowerCase(),
+        description: `Imported cURL path: ${parsed.method} ${parsed.path}`,
+        parameters: [
+          ...parsed.pathParameters,
+          ...parsed.queryParams,
+          ...parsed.bodyParameters
+        ],
+        enableToon: false,
+        customDescription: ''
+      };
+
+      setManualEndpoints([...manualEndpoints, newEndpoint]);
+      setCurlInput('');
+      setCurlError('');
+      setShowCurlModal(false);
+    } catch (err: any) {
+      setCurlError(`Error parsing cURL: ${err.message || err}`);
+    }
+  };
 
   return (
     <>
@@ -287,23 +349,33 @@ export function ConnectWizard() {
                         <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
                           <Layers className="w-4 h-4 text-cyan-400" /> Endpoints (Model Tools)
                         </h3>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setManualEndpoints([
-                              ...manualEndpoints,
-                              {
-                                path: '',
-                                method: 'get',
-                                description: '',
-                                parameters: []
-                              }
-                            ]);
-                          }}
-                          className="px-3 py-1.5 bg-zinc-850 hover:bg-zinc-800 text-cyan-400 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Add Endpoint
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowCurlModal(true)}
+                            className="px-3 py-1.5 bg-zinc-850 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Terminal className="w-3.5 h-3.5" /> Import cURL
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setManualEndpoints([
+                                ...manualEndpoints,
+                                {
+                                  path: '',
+                                  method: 'get',
+                                  description: '',
+                                  parameters: []
+                                }
+                              ]);
+                            }}
+                            className="px-3 py-1.5 bg-zinc-850 hover:bg-zinc-800 text-cyan-400 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Endpoint
+                          </button>
+                        </div>
                       </div>
 
                       {manualEndpoints.length === 0 ? (
@@ -895,6 +967,77 @@ export function ConnectWizard() {
 
           </div>
         )}
+
+      {/* Sleek Terminal-Styled Paste cURL Modal */}
+      {showCurlModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in p-4">
+          <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 animate-scale-in">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowCurlModal(false);
+                setCurlError('');
+              }}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white p-1.5 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Terminal className="w-5 h-5 text-amber-400" /> Import cURL Command
+              </h3>
+              <p className="text-xs text-zinc-400 leading-normal">
+                Paste any standard `curl` request command to automatically extract the connection Base URL, endpoint path, HTTP method, header tokens, and body parameter schemas.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
+                <textarea
+                  value={curlInput}
+                  onChange={(e) => {
+                    setCurlInput(e.target.value);
+                    setCurlError('');
+                  }}
+                  placeholder={`curl -X POST "https://api.stripe.com/v1/customers" \\
+  -H "Authorization: Bearer sk_test_12345" \\
+  -d '{"email": "user@example.com", "balance": 1000}'`}
+                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 text-xs px-4 py-3 rounded-xl transition duration-200 outline-none text-zinc-200 font-mono placeholder-zinc-650 resize-none h-44 border-zinc-800/80"
+                />
+              </div>
+
+              {curlError && (
+                <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-start gap-2.5 text-xs text-red-300 font-medium">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{curlError}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCurlModal(false);
+                  setCurlError('');
+                }}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-xs font-bold rounded-xl transition cursor-pointer text-zinc-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleImportCurl}
+                className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Terminal className="w-3.5 h-3.5" /> Import & Autofill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
