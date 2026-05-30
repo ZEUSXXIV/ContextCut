@@ -544,7 +544,10 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                 responseStatus = response.status;
 
                 // Apply Token-Saver optimization recursive layer to response body
-                const optimizedResponse = applyTokenSaver(response.data, matchedApi.tokenSaverConfig);
+                const optimizedResponse = applyTokenSaver(response.data, {
+                  ...matchedApi.tokenSaverConfig,
+                  maxDepth: Math.max(matchedApi.tokenSaverConfig?.maxDepth || 10, 10),
+                });
 
                 originalSize = Buffer.byteLength(typeof response.data === 'string' ? response.data : JSON.stringify(response.data || {}), 'utf8');
                 optimizedSize = Buffer.byteLength(typeof optimizedResponse === 'string' ? optimizedResponse : JSON.stringify(optimizedResponse || {}), 'utf8');

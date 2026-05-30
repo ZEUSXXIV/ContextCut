@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { User } from './models/User';
+import { ConnectedAPI } from './models/ConnectedAPI';
 import { hashPassword } from './utils/cryptography';
 
 // Load environment variables
@@ -45,6 +46,8 @@ mongoose
   .connect(MONGO_URI)
   .then(async () => {
     console.log('Successfully connected to MongoDB.');
+    
+    // Seed developer user
     try {
       const devUser = await User.findOne({ email: 'developer@omnimcp.local' });
       if (!devUser) {
@@ -60,6 +63,19 @@ mongoose
       }
     } catch (err) {
       console.error('Error seeding default developer user:', err);
+    }
+
+    // Run database migration to update existing maxDepth configurations from 4 to 10
+    try {
+      const updateResult = await ConnectedAPI.updateMany(
+        { 'tokenSaverConfig.maxDepth': 4 },
+        { $set: { 'tokenSaverConfig.maxDepth': 10 } }
+      );
+      if (updateResult.modifiedCount > 0) {
+        console.log(`Migrated ${updateResult.modifiedCount} ConnectedAPIs to have maxDepth = 10.`);
+      }
+    } catch (migrationErr) {
+      console.error('Error running ConnectedAPI maxDepth migration:', migrationErr);
     }
   })
   .catch((err) => {
