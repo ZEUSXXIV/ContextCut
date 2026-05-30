@@ -15,6 +15,8 @@ export interface PathConfig {
   method: string;
   isEnabled: boolean;
   isWritable: boolean;
+  enableToon?: boolean;
+  customDescription?: string;
 }
 
 /**
@@ -165,7 +167,7 @@ export function convertSpecToMCPTools(spec: any, pathConfigs: PathConfig[]): MCP
     if (!operation) continue;
 
     const toolName = getToolName(config.method, config.path);
-    const description = operation.summary || operation.description || `Execute ${config.method.toUpperCase()} ${config.path}`;
+    const description = config.customDescription || operation.summary || operation.description || `Execute ${config.method.toUpperCase()} ${config.path}`;
     const inputSchema = buildToolInputSchema(operation);
 
     tools.push({
