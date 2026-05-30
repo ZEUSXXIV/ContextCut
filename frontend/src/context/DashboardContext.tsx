@@ -741,7 +741,9 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
           path: ep.path.startsWith('/') ? ep.path : `/${ep.path}`,
           method: ep.method.toLowerCase(),
           isEnabled: true,
-          isWritable: ep.method.toLowerCase() !== 'get'
+          isWritable: ep.method.toLowerCase() !== 'get',
+          enableToon: !!ep.enableToon,
+          customDescription: ep.customDescription || ''
         }));
 
         const customHeadersMap: Record<string, string> = {};
@@ -820,7 +822,14 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
                 name: gatewayName,
                 openApiUrl: connectMethod === 'manual' ? (baseUrl || 'manual') : apiUrl,
                 paths: connectMethod === 'manual'
-                  ? manualEndpoints.map(ep => ({ path: ep.path, method: ep.method, isEnabled: true, isWritable: ep.method !== 'get' }))
+                  ? manualEndpoints.map(ep => ({ 
+                      path: ep.path, 
+                      method: ep.method.toLowerCase(), 
+                      isEnabled: true, 
+                      isWritable: ep.method.toLowerCase() !== 'get',
+                      enableToon: !!ep.enableToon,
+                      customDescription: ep.customDescription || ''
+                    }))
                   : availablePaths,
                 credentialKeyName: credentialKeyName || undefined
               };
@@ -841,7 +850,14 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
             name: gatewayName,
             openApiUrl: connectMethod === 'manual' ? (baseUrl || 'manual') : apiUrl,
             paths: connectMethod === 'manual'
-              ? manualEndpoints.map(ep => ({ path: ep.path, method: ep.method, isEnabled: true, isWritable: ep.method !== 'get' }))
+              ? manualEndpoints.map(ep => ({ 
+                  path: ep.path, 
+                  method: ep.method.toLowerCase(), 
+                  isEnabled: true, 
+                  isWritable: ep.method.toLowerCase() !== 'get',
+                  enableToon: !!ep.enableToon,
+                  customDescription: ep.customDescription || ''
+                }))
               : availablePaths,
             credentialKeyName: credentialKeyName || undefined,
             totalRequests: 0,
@@ -1071,11 +1087,17 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
             description: p.description || ''
           }));
 
+          const pathConfig = (gt.paths || []).find(
+            (p: any) => p.path === path && p.method.toLowerCase() === method.toLowerCase()
+          );
+
           endpointsList.push({
             path,
             method: method.toUpperCase(),
             description: methodData.summary || '',
-            parameters: [...otherParams, ...bodyParams]
+            parameters: [...otherParams, ...bodyParams],
+            enableToon: pathConfig?.enableToon || false,
+            customDescription: pathConfig?.customDescription || ''
           });
         });
       });

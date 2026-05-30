@@ -491,6 +491,59 @@ export function ConnectWizard() {
                                   </div>
                                 )}
                               </div>
+
+                              {/* Manual Endpoint Custom Overrides */}
+                              <div className="space-y-3.5 pt-3.5 border-t border-zinc-900">
+                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Endpoint Tool Overrides</h4>
+                                
+                                <div className="flex items-start gap-3 bg-zinc-900/40 border border-zinc-900/60 p-3 rounded-xl">
+                                  <input
+                                    type="checkbox"
+                                    id={`manual-enablePathToon-${epIdx}`}
+                                    checked={ep.enableToon || false}
+                                    onChange={(e) => {
+                                      const updated = [...manualEndpoints];
+                                      updated[epIdx].enableToon = e.target.checked;
+                                      setManualEndpoints(updated);
+                                    }}
+                                    className="w-4 h-4 rounded border-zinc-800 bg-zinc-950 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer mt-0.5"
+                                  />
+                                  <div className="space-y-0.5">
+                                    <label htmlFor={`manual-enablePathToon-${epIdx}`} className="text-xs font-bold text-zinc-300 uppercase tracking-wider cursor-pointer flex items-center gap-1">
+                                      <Zap className="w-3 h-3 text-amber-400 fill-amber-400/20" /> Enable TOON Tabular Serialization
+                                    </label>
+                                    <p className="text-[10px] text-zinc-500 leading-normal">
+                                      Compresses JSON responses of this endpoint into space-efficient TOON tables to save up to 90% tokens.
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                    Custom Description & Request Body Example (Overrides Standard Summary)
+                                  </label>
+                                  <textarea
+                                    value={ep.customDescription || ''}
+                                    onChange={(e) => {
+                                      const updated = [...manualEndpoints];
+                                      updated[epIdx].customDescription = e.target.value;
+                                      setManualEndpoints(updated);
+                                    }}
+                                    placeholder={`e.g. Requires request body structured like:
+{
+  "postId": 123,
+  "comment": {
+    "body": "Sleek tool integration!",
+    "author": { "name": "Alice" }
+  }
+}`}
+                                    className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 text-[11px] px-3.5 py-2.5 rounded-xl transition duration-200 outline-none text-zinc-300 placeholder-zinc-650 h-24 resize-none font-sans"
+                                  />
+                                  <p className="text-[9px] text-zinc-500 leading-normal">
+                                    💡 Highly recommended for complex body structures. Provides the LLM with exact payload guidelines to eliminate syntax/schema generation errors.
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
