@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 export function ConnectWizard() {
   const router = useRouter();
-  const { activeTab, setActiveTab, isBackendConnected, setIsBackendConnected, isDemoMode, setIsDemoMode, gateways, setGateways, analytics, setAnalytics, user, setUser, sessionApiKey, setSessionApiKey, apiUrl, setApiUrl, gatewayName, setGatewayName, isValidating, setIsValidating, validationError, setValidationError, availablePaths, setAvailablePaths, credentialKeyName, setCredentialKeyName, credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId, copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab, enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway, connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList, manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec, pathKey, methodKey, simulatingId, setSimulatingId, BACKEND_URL, fetchData, loadDemoData, checkSession, handleLogout, handleValidateUrl, togglePathEnabled, togglePathWritable, handleCreateGateway, handleDeleteGateway, handleSimulateRequest, copyToClipboard, resetWizard, handleStartEditGateway, } = useDashboard();
+  const { activeTab, setActiveTab, isBackendConnected, setIsBackendConnected, isDemoMode, setIsDemoMode, gateways, setGateways, analytics, setAnalytics, user, setUser, sessionApiKey, setSessionApiKey, apiUrl, setApiUrl, gatewayName, setGatewayName, isValidating, setIsValidating, validationError, setValidationError, availablePaths, setAvailablePaths, credentialKeyName, setCredentialKeyName, credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId, copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab, enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway, connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList, manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec, pathKey, methodKey, simulatingId, setSimulatingId, BACKEND_URL, fetchData, loadDemoData, checkSession, handleLogout, handleValidateUrl, togglePathEnabled, togglePathWritable, togglePathToon, updatePathDescription, handleCreateGateway, handleDeleteGateway, handleSimulateRequest, copyToClipboard, resetWizard, handleStartEditGateway, } = useDashboard();
 
   return (
     <>
@@ -613,7 +613,7 @@ export function ConnectWizard() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+                  <div className="flex flex-col gap-4 max-h-[450px] overflow-y-auto custom-scrollbar p-1">
                     {availablePaths.map((p: any, idx: number) => {
                       const methodColors: Record<string, string> = {
                         get: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -626,55 +626,95 @@ export function ConnectWizard() {
                       return (
                         <div
                           key={idx}
-                          className={`border p-4 rounded-xl flex items-center justify-between gap-4 transition-all duration-300 ${
+                          className={`border p-4 rounded-xl flex flex-col gap-3.5 transition-all duration-300 ${
                             p.isEnabled
                               ? 'bg-zinc-950/80 border-zinc-800'
                               : 'bg-zinc-900/10 border-dashed border-zinc-850 opacity-40'
                           }`}
                         >
-                          <div className="space-y-1.5 overflow-hidden flex-1">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="space-y-1.5 overflow-hidden flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded border tracking-wider font-mono ${methodColors[p.method]}`}>
+                                  {p.method}
+                                </span>
+                                <span className="text-xs font-mono font-semibold text-zinc-300 truncate max-w-sm md:max-w-md" title={p.path}>
+                                  {p.path}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePathWritable(idx)}
+                                  disabled={!p.isEnabled}
+                                  className={`flex items-center gap-1 text-[10px] font-bold ${
+                                    p.isWritable
+                                      ? 'text-cyan-400 hover:text-cyan-300'
+                                      : 'text-zinc-500 hover:text-zinc-400'
+                                  }`}
+                                >
+                                  {p.isWritable ? (
+                                    <>
+                                      <Unlock className="w-3 h-3" />
+                                      <span>Read & Write</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lock className="w-3.5 h-3.5" />
+                                      <span>Read-Only</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+
                             <div className="flex items-center gap-2">
-                              <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded border tracking-wider font-mono ${methodColors[p.method]}`}>
-                                {p.method}
-                              </span>
-                              <span className="text-xs font-mono font-semibold text-zinc-300 truncate max-w-[200px]" title={p.path}>
-                                {p.path}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => togglePathWritable(idx)}
-                                disabled={!p.isEnabled}
-                                className={`flex items-center gap-1 text-[10px] font-bold ${
-                                  p.isWritable
-                                    ? 'text-cyan-400 hover:text-cyan-300'
-                                    : 'text-zinc-500 hover:text-zinc-400'
-                                }`}
-                              >
-                                {p.isWritable ? (
-                                  <>
-                                    <Unlock className="w-3 h-3" />
-                                    <span>Read & Write</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Lock className="w-3.5 h-3.5" />
-                                    <span>Read-Only</span>
-                                  </>
-                                )}
-                              </button>
+                              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider hidden sm:inline">Expose Endpoint</span>
+                              <input
+                                type="checkbox"
+                                checked={p.isEnabled}
+                                onChange={() => togglePathEnabled(idx)}
+                                className="w-4.5 h-4.5 rounded border-zinc-800 bg-zinc-950 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                              />
                             </div>
                           </div>
 
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={p.isEnabled}
-                              onChange={() => togglePathEnabled(idx)}
-                              className="w-4.5 h-4.5 rounded border-zinc-800 bg-zinc-950 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
-                            />
-                          </div>
+                          {p.isEnabled && (
+                            <div className="border-t border-zinc-850/60 pt-3 space-y-3 animate-fade-in">
+                              <div className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  id={`enablePathToon-${idx}`}
+                                  checked={p.enableToon || false}
+                                  onChange={() => togglePathToon(idx)}
+                                  className="w-4 h-4 rounded border-zinc-800 bg-zinc-950 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer mt-0.5"
+                                />
+                                <div className="space-y-0.5">
+                                  <label htmlFor={`enablePathToon-${idx}`} className="text-xs font-bold text-zinc-300 uppercase tracking-wider cursor-pointer flex items-center gap-1">
+                                    <Zap className="w-3 h-3 text-amber-400 fill-amber-400/20" /> Enable TOON Tabular Serialization
+                                  </label>
+                                  <p className="text-[10px] text-zinc-500 leading-normal">
+                                    Compresses JSON responses of this specific endpoint into dense TOON tables to save up to 90% tokens.
+                                  </p>
+                                </div>
+                              </div>
 
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                  Custom Description & Request Body Example
+                                </label>
+                                <textarea
+                                  value={p.customDescription || ''}
+                                  onChange={(e) => updatePathDescription(idx, e.target.value)}
+                                  placeholder="e.g. Requires request body schema: { 'query': 'string', 'filters': { 'category': 'string' } }. Paste example payload/structure to prevent model errors on complex schemas."
+                                  className="w-full bg-zinc-950/80 border border-zinc-850 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/20 text-[11px] px-3.5 py-2.5 rounded-xl transition duration-200 outline-none text-zinc-300 placeholder-zinc-650 h-20 resize-none font-sans"
+                                />
+                                <p className="text-[9px] text-zinc-500 leading-normal">
+                                  💡 Overrides standard OpenAPI documentation for this path. Highly recommended for instructing the LLM on complex nested JSON structures.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

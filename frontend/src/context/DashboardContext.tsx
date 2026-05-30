@@ -7,6 +7,8 @@ interface PathConfig {
   method: string;
   isEnabled: boolean;
   isWritable: boolean;
+  enableToon?: boolean;
+  customDescription?: string;
 }
 
 interface Gateway {
@@ -710,6 +712,18 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     setAvailablePaths(updated);
   };
 
+  const togglePathToon = (index: number) => {
+    const updated = [...availablePaths];
+    updated[index].enableToon = !updated[index].enableToon;
+    setAvailablePaths(updated);
+  };
+
+  const updatePathDescription = (index: number, desc: string) => {
+    const updated = [...availablePaths];
+    updated[index].customDescription = desc;
+    setAvailablePaths(updated);
+  };
+
   // Handle gateway creation
   const handleCreateGateway = async () => {
     if (!gatewayName) return;
@@ -1112,7 +1126,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
       BACKEND_URL, fetchData, loadDemoData, checkSession,
       handleLogin, handleSignup, handleVerifyOtp, handleResendOtp, handleLogout,
       handleOtpChange, handleOtpKeyDown,
-      handleValidateUrl, togglePathEnabled, togglePathWritable,
+      handleValidateUrl, togglePathEnabled, togglePathWritable, togglePathToon, updatePathDescription,
       handleCreateGateway, handleDeleteGateway, handleSimulateRequest,
       copyToClipboard, resetWizard, handleStartEditGateway,
       pathKey, methodKey

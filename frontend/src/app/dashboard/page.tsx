@@ -40,6 +40,8 @@ interface PathConfig {
   method: string;
   isEnabled: boolean;
   isWritable: boolean;
+  enableToon?: boolean;
+  customDescription?: string;
 }
 
 interface Gateway {
