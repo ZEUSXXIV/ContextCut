@@ -339,7 +339,7 @@ function DashboardContent() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {gateways.map((gt: any) => {
                       const id = gt.id || gt._id || 'mock';
-                      const gatewayUrl = `${BACKEND_URL}/api/mcp/sse?apiKey=${sessionApiKey || 'omni_gt_developer_key_123456'}`;
+                      const gatewayUrl = `${BACKEND_URL}/api/mcp/sse?apiKey=${sessionApiKey || 'omni_gt_developer_key_123456'}${id !== 'mock' ? `&gatewayId=${id}` : ''}`;
                       const isSimulating = simulatingId === id;
 
                       return (

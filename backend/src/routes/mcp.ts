@@ -46,6 +46,7 @@ router.get('/sse', authenticateApiKey as any, (req: AuthenticatedRequest, res: R
   }, 30000);
 
   // Generate unique session ID for client interactions
+  const gatewayId = req.query.gatewayId as string;
   const sessionId = crypto.randomBytes(16).toString('hex');
   sseSessions.set(sessionId, { res });
 
@@ -56,9 +57,12 @@ router.get('/sse', authenticateApiKey as any, (req: AuthenticatedRequest, res: R
   });
 
   // Standard MCP SSE initialization event - tells client where to send POST messages
-  const messageUrl = `${req.protocol}://${req.get('host')}/api/mcp/message?sessionId=${sessionId}&apiKey=${req.user.apiKey}`;
+  let messageUrl = `${req.protocol}://${req.get('host')}/api/mcp/message?sessionId=${sessionId}&apiKey=${req.user.apiKey}`;
+  if (gatewayId && typeof gatewayId === 'string' && gatewayId.match(/^[0-9a-fA-F]{24}$/)) {
+    messageUrl += `&gatewayId=${gatewayId}`;
+  }
   res.write(`event: endpoint\ndata: ${messageUrl}\n\n`);
-  console.log(`MCP SSE session ${sessionId} initialized for user ${req.user.email}`);
+  console.log(`MCP SSE session ${sessionId} initialized for user ${req.user.email}${gatewayId ? ` (gateway: ${gatewayId})` : ''}`);
 });
 
 /**
@@ -126,8 +130,13 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
           },
         };
       } else if (method === 'tools/list') {
-        // Fetch all registered Connected APIs for the tenant
-        const apis = await ConnectedAPI.find({ user: req.user._id });
+        // Fetch registered Connected APIs for the tenant, filtering by gatewayId if present
+        const gatewayId = req.query.gatewayId;
+        const query: any = { user: req.user._id };
+        if (gatewayId && typeof gatewayId === 'string' && gatewayId.match(/^[0-9a-fA-F]{24}$/)) {
+          query._id = gatewayId;
+        }
+        const apis = await ConnectedAPI.find(query);
         const allTools: any[] = [];
 
         for (const api of apis) {
@@ -184,7 +193,12 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
           }
 
           // Resolve tool name to specific ConnectedAPI and path configuration
-          const apis = await ConnectedAPI.find({ user: req.user._id });
+          const gatewayId = req.query.gatewayId;
+          const query: any = { user: req.user._id };
+          if (gatewayId && typeof gatewayId === 'string' && gatewayId.match(/^[0-9a-fA-F]{24}$/)) {
+            query._id = gatewayId;
+          }
+          const apis = await ConnectedAPI.find(query);
           let matchedApi: any = null;
           let matchedPathConfig: any = null;
 
