@@ -501,7 +501,12 @@ export function ConnectWizard() {
                     <div className="flex justify-end">
                       <button
                         type="button"
-                        onClick={handleCreateGateway}
+                        onClick={async () => {
+                          await handleCreateGateway();
+                          if (editingGateway) {
+                            router.push('/dashboard');
+                          }
+                        }}
                         disabled={!gatewayName || !baseUrl || manualEndpoints.some((ep: any) => !ep.path)}
                         className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 cursor-pointer disabled:opacity-40"
                       >
@@ -685,7 +690,15 @@ export function ConnectWizard() {
                     Back
                   </button>
                   <button
-                    onClick={handleCreateGateway}
+                    onClick={async () => {
+                      await handleCreateGateway();
+                      // Only redirect if a new gateway preview isn't active
+                      // Note: handleCreateGateway will set newGatewayId to show the visual output card.
+                      // If editing, we can safely redirect immediately.
+                      if (editingGateway) {
+                        router.push('/dashboard');
+                      }
+                    }}
                     className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-bold text-xs rounded-xl shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4 stroke-[2.5]" /> {editingGateway ? 'Save Changes' : 'Host Gateway'}
