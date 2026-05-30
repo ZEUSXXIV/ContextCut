@@ -113,6 +113,10 @@ function DashboardContent() {
   const router = useRouter();
   const { activeTab, setActiveTab, isBackendConnected, setIsBackendConnected, isDemoMode, setIsDemoMode, gateways, setGateways, analytics, setAnalytics, user, setUser, sessionApiKey, setSessionApiKey, apiUrl, setApiUrl, gatewayName, setGatewayName, isValidating, setIsValidating, validationError, setValidationError, availablePaths, setAvailablePaths, credentialKeyName, setCredentialKeyName, credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId, copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab, enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway, connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList, manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec, simulatingId, setSimulatingId, BACKEND_URL, fetchData, loadDemoData, checkSession, handleLogout, handleValidateUrl, togglePathEnabled, togglePathWritable, handleCreateGateway, handleDeleteGateway, handleSimulateRequest, copyToClipboard, resetWizard, handleStartEditGateway, } = useDashboard();
   
+  useEffect(() => {
+    setActiveTab('dashboard');
+  }, [setActiveTab]);
+
   // Loaded & Authenticated Dashboard Render
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">

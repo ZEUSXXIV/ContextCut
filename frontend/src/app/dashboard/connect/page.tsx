@@ -11,7 +11,11 @@ import { Activity, Layers, Cpu, Globe, Database, Shield, Trash2, Play, CheckCirc
 import Link from 'next/link';
 
 export default function ConnectPage() {
-  const { isDemoMode, fetchData, isBackendConnected, user, handleLogout } = useDashboard();
+  const { isDemoMode, fetchData, isBackendConnected, user, handleLogout, setActiveTab } = useDashboard();
+
+  React.useEffect(() => {
+    setActiveTab('connect');
+  }, [setActiveTab]);
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">

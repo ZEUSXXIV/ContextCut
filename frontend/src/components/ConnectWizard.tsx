@@ -706,8 +706,15 @@ export function ConnectWizard() {
                                 <textarea
                                   value={p.customDescription || ''}
                                   onChange={(e) => updatePathDescription(idx, e.target.value)}
-                                  placeholder="e.g. Requires request body schema: { 'query': 'string', 'filters': { 'category': 'string' } }. Paste example payload/structure to prevent model errors on complex schemas."
-                                  className="w-full bg-zinc-950/80 border border-zinc-850 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/20 text-[11px] px-3.5 py-2.5 rounded-xl transition duration-200 outline-none text-zinc-300 placeholder-zinc-650 h-20 resize-none font-sans"
+                                  placeholder={`e.g. Requires request body structured like:
+{
+  "postId": 123,
+  "comment": {
+    "body": "Sleek tool integration!",
+    "author": { "name": "Alice" }
+  }
+}`}
+                                  className="w-full bg-zinc-950/80 border border-zinc-850 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/20 text-[11px] px-3.5 py-2.5 rounded-xl transition duration-200 outline-none text-zinc-300 placeholder-zinc-650 h-24 resize-none font-sans"
                                 />
                                 <p className="text-[9px] text-zinc-500 leading-normal">
                                   💡 Overrides standard OpenAPI documentation for this path. Highly recommended for instructing the LLM on complex nested JSON structures.
