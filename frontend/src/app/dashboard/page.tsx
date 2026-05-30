@@ -354,14 +354,6 @@ function DashboardContent() {
                             
                             <div className="flex items-center gap-1">
                               <button
-                                onClick={() => handleSimulateRequest(id)}
-                                disabled={isSimulating}
-                                title="Trigger Simulation"
-                                className="p-1.5 bg-zinc-850/80 hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-400 border border-zinc-750 rounded-lg transition duration-200 cursor-pointer disabled:opacity-40"
-                              >
-                                <Play className={`w-3.5 h-3.5 ${isSimulating ? 'animate-spin' : ''}`} />
-                              </button>
-                              <button
                                 onClick={() => {
                                   handleStartEditGateway(gt);
                                   router.push('/dashboard/connect');
