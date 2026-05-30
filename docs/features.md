@@ -47,7 +47,8 @@ Omni Rest-to-MCP is a premium, enterprise-grade, low-overhead Model Context Prot
 ---
 
 ## 5. Premium Observability Timeline Explorer Dashboard
-* **Glassmorphic Analytics UI**: A stunning dark-mode developer console delivering high-level charts, gateway volume tracking, and real-time Token-Saver optimization statistics.
+* **Glassmorphic Analytics UI**: A stunning dark-mode developer console delivering high-level charts, exact dynamic sandbox metric summaries, and real-time Token-Saver optimization statistics.
+* **Dedicated Navigation Routes**: Migrated the "Connect New API" wizard into its own dedicated routing page (`/dashboard/connect`) backed by a shared `<DashboardProvider>` layout layer, ensuring stable page states and clean navigation flows.
 * **Live Request Tracker**: A console tracking live incoming tool requests with responsive status indicators and quick-view metrics.
 * **Interactive Latency Timeline**: Clicking on any request opens an overlay showing step-by-step processing latency splits:
   1. **LLM Request Trigger** (`0ms`) — Captures model parameters and client session handshakes.
