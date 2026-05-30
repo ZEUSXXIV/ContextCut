@@ -103,6 +103,53 @@ app.get('/openapi.json', (req, res) => {
             }
           }
         }
+      },
+      '/items/bulk': {
+        post: {
+          summary: 'Create Bulk Items',
+          description: 'Creates multiple items at once. Expects a complicated nested structure.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    batchName: { type: 'string' },
+                    options: {
+                      type: 'object',
+                      properties: {
+                        dryRun: { type: 'boolean' },
+                        tags: {
+                          type: 'array',
+                          items: { type: 'string' }
+                        }
+                      },
+                      required: ['dryRun']
+                    },
+                    records: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          name: { type: 'string' },
+                          value: { type: 'number' }
+                        },
+                        required: ['name']
+                      }
+                    }
+                  },
+                  required: ['batchName', 'options', 'records']
+                }
+              }
+            }
+          },
+          responses: {
+            201: {
+              description: 'Bulk Items Created'
+            }
+          }
+        }
       }
     }
   });
@@ -159,6 +206,21 @@ app.delete('/items/:id', checkToken, (req, res) => {
   items = items.filter(item => item.id !== id);
   console.log(`[Dummy API] DELETE /items/${id} called`);
   res.json({ status: 'success', message: `Item #${id} deleted.` });
+});
+
+// 5. POST /items/bulk (Complex Nested Body Route)
+app.post('/items/bulk', checkToken, (req, res) => {
+  const { batchName, options, records } = req.body;
+  if (!batchName || !options || !records) {
+    return res.status(400).json({ error: 'Missing batchName, options, or records parameters.' });
+  }
+  console.log(`[Dummy API] POST /items/bulk batch "${batchName}" dryRun: ${options.dryRun}`);
+  res.status(201).json({
+    status: 'success',
+    batchName,
+    processedCount: records.length,
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(port, () => {
