@@ -53,7 +53,10 @@ function DashboardContent() {
     copyToClipboard,
     handleDeleteGateway,
     handleStartEditGateway,
-    BACKEND_URL
+    BACKEND_URL,
+    resetWizard,
+    setConnectMethod,
+    setTriggerCurlImport
   } = useDashboard();
 
   // Multi-tab REST Client manager hook
@@ -70,6 +73,7 @@ function DashboardContent() {
   // Left Sidebar Collections States
   const [expandedGateways, setExpandedGateways] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   // Local URL input state for dual-syncing URLs with parameter grids
   const [urlInputVal, setUrlInputVal] = useState('');
@@ -440,17 +444,85 @@ function DashboardContent() {
         
         {/* Left Pane: Collections Sidebar Tree */}
         <aside className="w-80 border-r border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md flex flex-col overflow-y-auto custom-scrollbar select-none p-4 space-y-4 shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Workspace</span>
-            <button
-              onClick={() => {
-                router.push('/dashboard/connect');
-              }}
-              title="Connect New Connection"
-              className="p-1 bg-zinc-900 hover:bg-cyan-500/20 text-zinc-400 hover:text-cyan-400 border border-zinc-800 rounded-lg transition-all duration-200 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            </button>
+          <div className="flex items-center justify-between relative">
+            <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest">Workspace</span>
+            <div className="relative">
+              <button
+                onClick={() => setShowAddMenu(!showAddMenu)}
+                title="Connect New Connection Options"
+                className={`p-1 border rounded-lg transition-all duration-200 cursor-pointer ${
+                  showAddMenu
+                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                    : 'bg-zinc-900 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 border-zinc-800'
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showAddMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-45" 
+                    onClick={() => setShowAddMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-zinc-950 border border-zinc-850 shadow-2xl p-1.5 z-50 animate-fade-in divide-y divide-zinc-900/50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          resetWizard();
+                          setConnectMethod('url');
+                          setShowAddMenu(false);
+                          router.push('/dashboard/connect');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                        <div className="flex flex-col">
+                          <span>Import OpenAPI / Swagger</span>
+                          <span className="text-[9px] text-zinc-500 font-medium">Connect via spec URL</span>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          resetWizard();
+                          setConnectMethod('manual');
+                          setTriggerCurlImport(true);
+                          setShowAddMenu(false);
+                          router.push('/dashboard/connect');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Terminal className="w-3.5 h-3.5 text-amber-400" />
+                        <div className="flex flex-col">
+                          <span>Import cURL Command</span>
+                          <span className="text-[9px] text-zinc-500 font-medium">Auto-parse shell command</span>
+                        </div>
+                      </button>
+                    </div>
+                    
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          resetWizard();
+                          setConnectMethod('manual');
+                          setShowAddMenu(false);
+                          router.push('/dashboard/connect');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Settings className="w-3.5 h-3.5 text-purple-400" />
+                        <div className="flex flex-col">
+                          <span>Manual API Designer</span>
+                          <span className="text-[9px] text-zinc-500 font-medium">Build custom specs inline</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Sidebar Search Bar */}

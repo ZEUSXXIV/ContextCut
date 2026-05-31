@@ -117,6 +117,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
 
   // Manual API Designer state
   const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
+  const [triggerCurlImport, setTriggerCurlImport] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
   const [customHeadersList, setCustomHeadersList] = useState<{ key: string; value: string }[]>([
     { key: 'X-Rapidapi-Host', value: 'imdb232.p.rapidapi.com' }
@@ -1022,6 +1023,22 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     setNewGatewayId(null);
     setEditingGateway(null);
     setEnableToonCompression(false);
+    setConnectMethod('url');
+    setTriggerCurlImport(false);
+    setBaseUrl('');
+    setCustomHeadersList([
+      { key: 'X-Rapidapi-Host', value: 'imdb232.p.rapidapi.com' }
+    ]);
+    setManualEndpoints([
+      {
+        path: '/current',
+        method: 'get',
+        description: 'Get current information',
+        parameters: [
+          { name: 'city', in: 'query', type: 'string', required: true, description: 'Target city name' }
+        ]
+      }
+    ]);
   };
 
   const handleStartEditGateway = (gt: any) => {
@@ -1142,7 +1159,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
       credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId,
       copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab,
       enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway,
-      connectMethod, setConnectMethod, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList,
+      connectMethod, setConnectMethod, triggerCurlImport, setTriggerCurlImport, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList,
       manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec,
       simulatingId, setSimulatingId, isSimulating,
       BACKEND_URL, fetchData, loadDemoData, checkSession,
