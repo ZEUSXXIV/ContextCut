@@ -11,7 +11,7 @@ import { Activity, Layers, Cpu, Globe, Database, Shield, Trash2, Play, CheckCirc
 import Link from 'next/link';
 
 export default function ConnectPage() {
-  const { isDemoMode, fetchData, isBackendConnected, user, handleLogout, setActiveTab } = useDashboard();
+  const { isDemoMode, fetchData, isBackendConnected, user, handleLogout, setActiveTab, resetWizard } = useDashboard();
 
   React.useEffect(() => {
     setActiveTab('connect');
@@ -73,6 +73,7 @@ export default function ConnectPage() {
               </Link>
               <Link
                 href="/dashboard/connect"
+                onClick={() => resetWizard()}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-300 bg-zinc-800 text-cyan-400 shadow-md border border-zinc-700/50"
               >
                 <Plus className="w-3.5 h-3.5" />

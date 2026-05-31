@@ -119,19 +119,9 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [connectMethod, setConnectMethod] = useState<'url' | 'manual'>('url');
   const [triggerCurlImport, setTriggerCurlImport] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
-  const [customHeadersList, setCustomHeadersList] = useState<{ key: string; value: string }[]>([
-    { key: 'X-Rapidapi-Host', value: 'imdb232.p.rapidapi.com' }
-  ]);
-  const [manualEndpoints, setManualEndpoints] = useState<any[]>([
-    {
-      path: '/current',
-      method: 'get',
-      description: 'Get current information',
-      parameters: [
-        { name: 'city', in: 'query', type: 'string', required: true, description: 'Target city name' }
-      ]
-    }
-  ]);
+  const [customHeadersList, setCustomHeadersList] = useState<{ key: string; value: string }[]>([]);
+  const [manualEndpoints, setManualEndpoints] = useState<any[]>([]);
+
 
   const synthesizeOpenApiSpec = (name: string, urlBase: string, endpoints: any[]) => {
     const paths: Record<string, any> = {};
@@ -1018,6 +1008,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     setApiUrl('');
     setGatewayName('');
     setAvailablePaths([]);
+    setCredentialKeyName('Authorization');
     setCredentialValue('');
     setWizardStep(1);
     setNewGatewayId(null);
@@ -1026,19 +1017,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
     setConnectMethod('url');
     setTriggerCurlImport(false);
     setBaseUrl('');
-    setCustomHeadersList([
-      { key: 'X-Rapidapi-Host', value: 'imdb232.p.rapidapi.com' }
-    ]);
-    setManualEndpoints([
-      {
-        path: '/current',
-        method: 'get',
-        description: 'Get current information',
-        parameters: [
-          { name: 'city', in: 'query', type: 'string', required: true, description: 'Target city name' }
-        ]
-      }
-    ]);
+    setCustomHeadersList([]);
+    setManualEndpoints([]);
   };
 
   const handleStartEditGateway = (gt: any) => {

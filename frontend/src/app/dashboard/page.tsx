@@ -446,18 +446,46 @@ function DashboardContent() {
         <aside className="w-80 border-r border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md flex flex-col overflow-y-auto custom-scrollbar select-none p-4 space-y-4 shrink-0">
           <div className="flex items-center justify-between relative">
             <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest">Workspace</span>
-            <div className="relative">
+            <div className="flex items-center gap-1.5">
+              {/* Swagger Import Quick Button */}
               <button
-                onClick={() => setShowAddMenu(!showAddMenu)}
-                title="Connect New Connection Options"
-                className={`p-1 border rounded-lg transition-all duration-200 cursor-pointer ${
-                  showAddMenu
-                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
-                    : 'bg-zinc-900 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 border-zinc-800'
-                }`}
+                onClick={() => {
+                  resetWizard();
+                  setConnectMethod('url');
+                  router.push('/dashboard/connect');
+                }}
+                title="Import OpenAPI / Swagger Spec"
+                className="p-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-cyan-400 rounded-lg transition-all duration-200 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <Globe className="w-3.5 h-3.5" />
               </button>
+
+              {/* cURL Import Quick Button */}
+              <button
+                onClick={() => {
+                  resetWizard();
+                  setConnectMethod('manual');
+                  setTriggerCurlImport(true);
+                  router.push('/dashboard/connect');
+                }}
+                title="Import cURL Command"
+                className="p-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-amber-400 rounded-lg transition-all duration-200 cursor-pointer"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowAddMenu(!showAddMenu)}
+                  title="More Connection Options"
+                  className={`p-1 border rounded-lg transition-all duration-200 cursor-pointer ${
+                    showAddMenu
+                      ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                      : 'bg-zinc-900 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 border-zinc-800'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                </button>
 
               {/* Dropdown Menu */}
               {showAddMenu && (
@@ -524,6 +552,7 @@ function DashboardContent() {
               )}
             </div>
           </div>
+        </div>
 
           {/* Sidebar Search Bar */}
           <div className="relative">
@@ -818,6 +847,7 @@ function DashboardContent() {
                       </div>
                       <button
                         onClick={() => {
+                          resetWizard();
                           router.push('/dashboard/connect');
                         }}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-bold text-xs rounded-xl shadow-md transition-all duration-300 cursor-pointer"
@@ -825,7 +855,7 @@ function DashboardContent() {
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Connect API
                       </button>
                     </div>
-
+ 
                     {gateways.length === 0 ? (
                       <div className="border border-dashed border-zinc-800 bg-zinc-950/20 rounded-2xl p-12 text-center space-y-4">
                         <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto text-zinc-600">
@@ -839,6 +869,7 @@ function DashboardContent() {
                         </div>
                         <button
                           onClick={() => {
+                            resetWizard();
                             router.push('/dashboard/connect');
                           }}
                           className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 text-xs font-semibold rounded-xl text-cyan-400 transition duration-200 cursor-pointer"
