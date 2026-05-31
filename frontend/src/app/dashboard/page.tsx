@@ -89,6 +89,7 @@ function DashboardContent() {
   const [editDocsSummary, setEditDocsSummary] = useState('');
   const [editDocsDescription, setEditDocsDescription] = useState('');
   const [editDocsParams, setEditDocsParams] = useState<Record<string, string>>({}); // paramName -> description
+  const [editDocsParameters, setEditDocsParameters] = useState<any[]>([]);
   const [editDocsBodyProps, setEditDocsBodyProps] = useState<Record<string, string>>({}); // propKey -> description
   const [isSavingDocs, setIsSavingDocs] = useState(false);
 
@@ -111,6 +112,9 @@ function DashboardContent() {
       docs.parameters.forEach((p: any) => {
         paramsMap[p.name] = p.description || '';
       });
+      setEditDocsParameters(JSON.parse(JSON.stringify(docs.parameters)));
+    } else {
+      setEditDocsParameters([]);
     }
     setEditDocsParams(paramsMap);
 
@@ -157,14 +161,8 @@ function DashboardContent() {
           op.summary = editDocsSummary;
           op.description = editDocsDescription;
 
-          // Update parameter descriptions
-          if (op.parameters) {
-            op.parameters.forEach((param: any) => {
-              if (editDocsParams[param.name] !== undefined) {
-                param.description = editDocsParams[param.name];
-              }
-            });
-          }
+          // Update parameters with the edited parameters array
+          op.parameters = editDocsParameters;
 
           // Update requestBody schema properties descriptions
           if (op.requestBody && op.requestBody.content?.['application/json']?.schema?.properties) {
@@ -1527,28 +1525,100 @@ function DashboardContent() {
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {docs.parameters.map((param: any, pidx: number) => (
+                                          {(isEditingDocs ? editDocsParameters : (docs.parameters || [])).map((param: any, pidx: number) => (
                                             <tr key={pidx} className="border-b border-zinc-900 hover:bg-zinc-900/5">
-                                              <td className="px-3 py-2 font-mono text-[11px] text-cyan-400 font-bold">{param.name}</td>
-                                              <td className="px-3 py-2 font-mono text-[10px] text-zinc-400">{param.in}</td>
+                                              <td className="px-3 py-2 font-mono text-[11px] text-cyan-400 font-bold">
+                                                {isEditingDocs ? (
+                                                  <input
+                                                    type="text"
+                                                    value={param.name ?? ''}
+                                                    onChange={(e) => {
+                                                      const updated = [...editDocsParameters];
+                                                      updated[pidx] = { ...updated[pidx], name: e.target.value };
+                                                      setEditDocsParameters(updated);
+                                                    }}
+                                                    className="w-full bg-zinc-900 border border-zinc-850 rounded px-2 py-1 text-[11px] text-cyan-455 font-bold outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+                                                  />
+                                                ) : (
+                                                  param.name
+                                                )}
+                                              </td>
                                               <td className="px-3 py-2 font-mono text-[10px] text-zinc-400">
-                                                {param.schema?.type || param.type || 'string'}
+                                                {isEditingDocs ? (
+                                                  <select
+                                                    value={param.in ?? 'query'}
+                                                    onChange={(e) => {
+                                                      const updated = [...editDocsParameters];
+                                                      updated[pidx] = { ...updated[pidx], in: e.target.value };
+                                                      setEditDocsParameters(updated);
+                                                    }}
+                                                    className="w-full bg-zinc-900 border border-zinc-850 rounded px-1 px-1.5 py-1 text-[11px] text-zinc-300 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+                                                  >
+                                                    <option value="query">query</option>
+                                                    <option value="path">path</option>
+                                                    <option value="header">header</option>
+                                                    <option value="cookie">cookie</option>
+                                                  </select>
+                                                ) : (
+                                                  param.in
+                                                )}
+                                              </td>
+                                              <td className="px-3 py-2 font-mono text-[10px] text-zinc-400">
+                                                {isEditingDocs ? (
+                                                  <select
+                                                    value={param.schema?.type || param.type || 'string'}
+                                                    onChange={(e) => {
+                                                      const updated = [...editDocsParameters];
+                                                      const newType = e.target.value;
+                                                      const schema = updated[pidx].schema ? { ...updated[pidx].schema, type: newType } : { type: newType };
+                                                      updated[pidx] = { ...updated[pidx], type: newType, schema };
+                                                      setEditDocsParameters(updated);
+                                                    }}
+                                                    className="w-full bg-zinc-900 border border-zinc-850 rounded px-1 px-1.5 py-1 text-[11px] text-zinc-300 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+                                                  >
+                                                    <option value="string">string</option>
+                                                    <option value="number">number</option>
+                                                    <option value="boolean">boolean</option>
+                                                    <option value="integer">integer</option>
+                                                    <option value="array">array</option>
+                                                    <option value="object">object</option>
+                                                  </select>
+                                                ) : (
+                                                  param.schema?.type || param.type || 'string'
+                                                )}
                                               </td>
                                               <td className="px-3 py-2">
-                                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${param.required ? 'text-amber-400 bg-amber-500/5' : 'text-zinc-650 bg-zinc-950'}`}>
-                                                  {param.required ? 'YES' : 'NO'}
-                                                </span>
+                                                {isEditingDocs ? (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      const updated = [...editDocsParameters];
+                                                      updated[pidx] = { ...updated[pidx], required: !updated[pidx].required };
+                                                      setEditDocsParameters(updated);
+                                                    }}
+                                                    className={`text-[9px] px-2 py-0.5 rounded font-extrabold cursor-pointer transition-all border ${
+                                                      param.required
+                                                        ? 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20'
+                                                        : 'text-zinc-500 bg-zinc-900 border-zinc-800 hover:text-zinc-300'
+                                                    }`}
+                                                  >
+                                                    {param.required ? 'YES' : 'NO'}
+                                                  </button>
+                                                ) : (
+                                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${param.required ? 'text-amber-400 bg-amber-500/5' : 'text-zinc-650 bg-zinc-950'}`}>
+                                                    {param.required ? 'YES' : 'NO'}
+                                                  </span>
+                                                )}
                                               </td>
                                               <td className="px-3 py-2 text-zinc-455">
                                                 {isEditingDocs ? (
                                                   <input
                                                     type="text"
-                                                    value={editDocsParams[param.name] ?? ''}
+                                                    value={param.description ?? ''}
                                                     onChange={(e) => {
-                                                      setEditDocsParams({
-                                                        ...editDocsParams,
-                                                        [param.name]: e.target.value
-                                                      });
+                                                      const updated = [...editDocsParameters];
+                                                      updated[pidx] = { ...updated[pidx], description: e.target.value };
+                                                      setEditDocsParameters(updated);
                                                     }}
                                                     placeholder="Provide parameter guideline for the LLM..."
                                                     className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-[11px] text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
