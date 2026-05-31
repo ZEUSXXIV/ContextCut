@@ -3,7 +3,8 @@ import { authenticateApiKey, AuthenticatedRequest } from '../middleware/auth';
 import { ConnectedAPI } from '../models/ConnectedAPI';
 import { EncryptedSecret } from '../models/EncryptedSecret';
 import { fetchAndValidateOpenAPI, getAvailablePathsFromSpec } from '../utils/openapiParser';
-import { encrypt } from '../utils/cryptography';
+import { encrypt, decrypt } from '../utils/cryptography';
+import axios from 'axios';
 import { RequestTrace } from '../models/RequestTrace';
 import { getToolName } from '../utils/openapiParser';
 import crypto from 'crypto';
@@ -459,6 +460,118 @@ router.post('/:id/simulate', async (req: AuthenticatedRequest, res: Response): P
   } catch (error: any) {
     console.error('Simulation API error:', error);
     res.status(500).json({ error: 'Internal Server Error while running simulation.' });
+  }
+});
+
+/**
+ * @route   POST /api/gateways/:id/test-request
+ * @desc    Executes a real REST test request against the gateway's base URL and endpoint path, merging decrypted secure keys
+ */
+router.post('/:id/test-request', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized: User context missing.' });
+      return;
+    }
+
+    const { path, method, queryParams, headers: requestHeaders, body } = req.body;
+    if (!path || !method) {
+      res.status(400).json({ error: 'Path and Method parameters are required.' });
+      return;
+    }
+
+    const api = await ConnectedAPI.findOne({ _id: req.params.id, user: req.user._id });
+    if (!api) {
+      res.status(404).json({ error: 'Connected API/Gateway not found.' });
+      return;
+    }
+
+    // Resolve static custom headers from connection configuration
+    const connectionHeaders: Record<string, string> = {};
+    if (api.customHeaders && typeof api.customHeaders === 'object') {
+      const headersObj = api.customHeaders as Record<string, string>;
+      Object.keys(headersObj).forEach((k) => {
+        connectionHeaders[k] = headersObj[k];
+      });
+    }
+
+    // Securely decrypt API key / auth credential in-memory
+    const secret = await EncryptedSecret.findOne({ connectedApi: api._id });
+    if (secret && secret.encryptedData) {
+      try {
+        const decryptedVal = decrypt(secret.encryptedData, secret.iv, secret.tag);
+        const headerKey = api.tokenSaverConfig?.stripMetadataKeys?.includes(api.allowedPaths[0]?.customDescription || 'Authorization') // fallback key name helper
+          ? 'Authorization'
+          : 'Authorization'; // default key name
+        
+        // Actually find the configured credentialKeyName if stored or default
+        const actualKey = (api as any).credentialKeyName || 'Authorization';
+        connectionHeaders[actualKey] = decryptedVal;
+      } catch (decErr) {
+        console.error('Failed to decrypt gateway secret token:', decErr);
+      }
+    }
+
+    // Merge static connection headers with incoming execution overrides
+    const mergedHeaders: Record<string, string> = {
+      ...connectionHeaders,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    if (requestHeaders && typeof requestHeaders === 'object') {
+      Object.keys(requestHeaders).forEach((k) => {
+        mergedHeaders[k] = requestHeaders[k];
+      });
+    }
+
+    // Format full target URL by resolving spec servers URL or fallback to specUrl origin
+    let baseUrl = 'http://localhost';
+    const spec = api.rawSpec;
+    if (spec && spec.servers && spec.servers.length > 0 && spec.servers[0].url) {
+      baseUrl = spec.servers[0].url;
+    } else if (api.specUrl) {
+      try {
+        baseUrl = new URL(api.specUrl).origin;
+      } catch (_) {}
+    }
+
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    const targetUrl = `${cleanBaseUrl}${cleanPath}`;
+
+    const proxyStart = new Date();
+    
+    // Execute real downstream axios REST request
+    const response = await axios({
+      url: targetUrl,
+      method: method.toUpperCase(),
+      params: queryParams || {},
+      headers: mergedHeaders,
+      data: body || undefined,
+      timeout: 15000,
+      validateStatus: () => true // Allow handling error statuses gracefully in Postman UI
+    });
+
+    const proxyEnd = new Date();
+    const latencyMs = proxyEnd.getTime() - proxyStart.getTime();
+
+    const responseSize = Buffer.byteLength(
+      typeof response.data === 'string' ? response.data : JSON.stringify(response.data || {}),
+      'utf8'
+    );
+
+    res.status(200).json({
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data,
+      latencyMs,
+      sizeBytes: responseSize
+    });
+  } catch (error: any) {
+    console.error('REST client proxy execution error:', error);
+    res.status(500).json({ error: `Downstream execution failed: ${error.message || error}` });
   }
 });
 
