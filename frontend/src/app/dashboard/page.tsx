@@ -820,7 +820,7 @@ function DashboardContent() {
                             return (
                               <button
                                 key={idx}
-                                onClick={() => openTab(id, gt.name, p.path, p.method, p.customDescription || '')}
+                                onClick={() => openTab(id, gt.name, p.path, p.method, p.customDescription || '', p.customHeaders)}
                                 className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] font-mono transition-all text-left ${
                                   isTabActive
                                     ? 'bg-theme-accent-dim text-theme-accent font-bold border-l-2 border-l-theme-accent pl-1.5'
