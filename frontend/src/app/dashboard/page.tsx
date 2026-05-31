@@ -84,6 +84,160 @@ function DashboardContent() {
   // Active sub-tabs in response pane
   const [resSubTab, setResSubTab] = useState<'body' | 'headers' | 'toon'>('body');
 
+  // Docs Inline Editor States
+  const [isEditingDocs, setIsEditingDocs] = useState(false);
+  const [editDocsSummary, setEditDocsSummary] = useState('');
+  const [editDocsDescription, setEditDocsDescription] = useState('');
+  const [editDocsParams, setEditDocsParams] = useState<Record<string, string>>({}); // paramName -> description
+  const [editDocsBodyProps, setEditDocsBodyProps] = useState<Record<string, string>>({}); // propKey -> description
+  const [isSavingDocs, setIsSavingDocs] = useState(false);
+
+  // Reset docs editing state when activeTabId changes
+  useEffect(() => {
+    setIsEditingDocs(false);
+  }, [activeTabId]);
+
+  const toggleEditDocsMode = (docs: any) => {
+    if (isEditingDocs) {
+      setIsEditingDocs(false);
+      return;
+    }
+
+    setEditDocsSummary(docs.summary || '');
+    setEditDocsDescription(docs.description || '');
+
+    const paramsMap: Record<string, string> = {};
+    if (docs.parameters) {
+      docs.parameters.forEach((p: any) => {
+        paramsMap[p.name] = p.description || '';
+      });
+    }
+    setEditDocsParams(paramsMap);
+
+    const bodyPropsMap: Record<string, string> = {};
+    if (docs.requestBody?.content?.['application/json']?.schema?.properties) {
+      const props = docs.requestBody.content['application/json'].schema.properties;
+      Object.keys(props).forEach((k) => {
+        bodyPropsMap[k] = props[k].description || '';
+      });
+    }
+    setEditDocsBodyProps(bodyPropsMap);
+
+    setIsEditingDocs(true);
+  };
+
+  const handleSaveDocs = async () => {
+    if (isSavingDocs) return;
+    const tab = getActiveTab();
+    if (!tab) return;
+
+    setIsSavingDocs(true);
+
+    try {
+      const targetGt = gateways.find((g: any) => (g.id || g._id) === tab.gatewayId);
+      if (!targetGt) throw new Error('Gateway connection not found.');
+
+      // Deep copy gateway rawSpec and paths
+      const updatedSpec = JSON.parse(JSON.stringify(targetGt.rawSpec || {}));
+      const updatedPaths = JSON.parse(JSON.stringify(targetGt.paths || []));
+
+      // 1. Update rawSpec summary and description
+      if (updatedSpec.paths) {
+        let pathKey = tab.path;
+        let methodKey = tab.method.toLowerCase();
+        let pathObj = updatedSpec.paths[pathKey];
+        if (!pathObj) {
+          const alt = pathKey.startsWith('/') ? pathKey.substring(1) : `/${pathKey}`;
+          pathObj = updatedSpec.paths[alt];
+          if (pathObj) pathKey = alt;
+        }
+
+        if (pathObj && pathObj[methodKey]) {
+          const op = pathObj[methodKey];
+          op.summary = editDocsSummary;
+          op.description = editDocsDescription;
+
+          // Update parameter descriptions
+          if (op.parameters) {
+            op.parameters.forEach((param: any) => {
+              if (editDocsParams[param.name] !== undefined) {
+                param.description = editDocsParams[param.name];
+              }
+            });
+          }
+
+          // Update requestBody schema properties descriptions
+          if (op.requestBody && op.requestBody.content?.['application/json']?.schema?.properties) {
+            const props = op.requestBody.content['application/json'].schema.properties;
+            Object.keys(props).forEach((propKey) => {
+              if (editDocsBodyProps[propKey] !== undefined) {
+                props[propKey].description = editDocsBodyProps[propKey];
+              }
+            });
+          }
+        }
+      }
+
+      // 2. Update paths array entry customDescription
+      const pathIdx = updatedPaths.findIndex(
+        (p: any) => p.path === tab.path && p.method.toLowerCase() === tab.method.toLowerCase()
+      );
+      if (pathIdx !== -1) {
+        updatedPaths[pathIdx].customDescription = editDocsDescription || editDocsSummary;
+      }
+
+      // Persist updates
+      if (!isDemoMode) {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (sessionApiKey) {
+          headers['Authorization'] = `Bearer ${sessionApiKey}`;
+        }
+
+        const res = await fetch(`${BACKEND_URL}/api/gateways/${targetGt._id || targetGt.id}`, {
+          method: 'PUT',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            name: targetGt.name,
+            credentialKeyName: targetGt.credentialKeyName,
+            rawSpec: updatedSpec,
+            paths: updatedPaths,
+            enableToonCompression: targetGt.enableToonCompression,
+            customHeaders: targetGt.customHeaders,
+            openApiUrl: targetGt.openApiUrl
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to update gateway documentation.');
+        }
+      } else {
+        const updatedGts = gateways.map((g: any) => {
+          if ((g.id || g._id) === tab.gatewayId) {
+            return {
+              ...g,
+              rawSpec: updatedSpec,
+              paths: updatedPaths
+            };
+          }
+          return g;
+        });
+        localStorage.setItem('omni_mcp_gateways', JSON.stringify(updatedGts));
+      }
+
+      await fetchData(true);
+      setIsEditingDocs(false);
+      alert('Documentation successfully saved and federated downstream!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to save documentation updates');
+    } finally {
+      setIsSavingDocs(false);
+    }
+  };
+
   // Expand gateways by default on first load
   useEffect(() => {
     if (gateways.length > 0) {
@@ -1317,9 +1471,45 @@ function DashboardContent() {
                             }
                             return (
                               <div className="space-y-4">
-                                <div className="space-y-1 pb-3 border-b border-zinc-900">
-                                  <h3 className="text-sm font-bold text-white tracking-wide">{docs.summary}</h3>
-                                  {docs.description && <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{docs.description}</p>}
+                                <div className="flex items-start justify-between border-b border-zinc-900 pb-3">
+                                  {isEditingDocs ? (
+                                    <div className="space-y-3 w-full mr-4">
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-bold text-zinc-550 uppercase tracking-wider block">Endpoint Summary</label>
+                                        <input
+                                          type="text"
+                                          value={editDocsSummary}
+                                          onChange={(e) => setEditDocsSummary(e.target.value)}
+                                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-semibold"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[9px] font-bold text-zinc-550 uppercase tracking-wider block">Detailed Tool Description</label>
+                                        <textarea
+                                          value={editDocsDescription}
+                                          onChange={(e) => setEditDocsDescription(e.target.value)}
+                                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all h-16 resize-none leading-relaxed"
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      <h3 className="text-sm font-bold text-white tracking-wide">{docs.summary}</h3>
+                                      {docs.description && <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{docs.description}</p>}
+                                    </div>
+                                  )}
+                                  
+                                  <button
+                                    onClick={() => toggleEditDocsMode(docs)}
+                                    className={`px-3 py-1.5 border rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                                      isEditingDocs
+                                        ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white'
+                                        : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-zinc-400 hover:text-cyan-400 hover:border-cyan-500/20'
+                                    }`}
+                                  >
+                                    <Settings className="w-3.5 h-3.5" />
+                                    <span>{isEditingDocs ? 'Cancel Edit' : 'Edit Docs'}</span>
+                                  </button>
                                 </div>
 
                                 {docs.parameters && docs.parameters.length > 0 && (
@@ -1349,7 +1539,24 @@ function DashboardContent() {
                                                   {param.required ? 'YES' : 'NO'}
                                                 </span>
                                               </td>
-                                              <td className="px-3 py-2 text-zinc-455">{param.description || 'No description.'}</td>
+                                              <td className="px-3 py-2 text-zinc-455">
+                                                {isEditingDocs ? (
+                                                  <input
+                                                    type="text"
+                                                    value={editDocsParams[param.name] ?? ''}
+                                                    onChange={(e) => {
+                                                      setEditDocsParams({
+                                                        ...editDocsParams,
+                                                        [param.name]: e.target.value
+                                                      });
+                                                    }}
+                                                    placeholder="Provide parameter guideline for the LLM..."
+                                                    className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-[11px] text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+                                                  />
+                                                ) : (
+                                                  param.description || 'No description.'
+                                                )}
+                                              </td>
                                             </tr>
                                           ))}
                                         </tbody>
@@ -1360,7 +1567,7 @@ function DashboardContent() {
 
                                 {docs.requestBody && docs.requestBody.content?.['application/json']?.schema && (
                                   <div className="space-y-2">
-                                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Expected Request Body properties</span>
+                                    <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Expected Request Body properties</span>
                                     <div className="border border-zinc-900 rounded-xl overflow-hidden bg-zinc-950/40 p-4">
                                       {(() => {
                                         const schema = docs.requestBody.content['application/json'].schema;
@@ -1375,13 +1582,30 @@ function DashboardContent() {
                                                   const prop = schema.properties[propKey];
                                                   const isReq = schema.required?.includes(propKey);
                                                   return (
-                                                    <div key={propKey} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 p-2 bg-zinc-900/30 border border-zinc-900 rounded-lg">
+                                                    <div key={propKey} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 p-2 bg-zinc-900/30 border border-zinc-900 rounded-lg">
                                                       <span className="font-mono text-xs text-amber-400 font-bold w-1/4 truncate">{propKey}</span>
                                                       <span className="font-mono text-[10px] text-zinc-550 w-16">{prop.type || 'string'}</span>
                                                       <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded w-12 text-center shrink-0 ${isReq ? 'text-amber-500 bg-amber-500/5 animate-pulse' : 'text-zinc-650'}`}>
                                                         {isReq ? 'Required' : 'Optional'}
                                                       </span>
-                                                      <span className="text-[11px] text-zinc-400 flex-1">{prop.description || 'No property description.'}</span>
+                                                      <div className="flex-1">
+                                                        {isEditingDocs ? (
+                                                          <input
+                                                            type="text"
+                                                            value={editDocsBodyProps[propKey] ?? ''}
+                                                            onChange={(e) => {
+                                                              setEditDocsBodyProps({
+                                                                ...editDocsBodyProps,
+                                                                [propKey]: e.target.value
+                                                              });
+                                                            }}
+                                                            placeholder="Provide property guideline for the LLM..."
+                                                            className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-[11px] text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+                                                          />
+                                                        ) : (
+                                                          <span className="text-[11px] text-zinc-400">{prop.description || 'No property description.'}</span>
+                                                        )}
+                                                      </div>
                                                     </div>
                                                   );
                                                 })}
@@ -1392,6 +1616,35 @@ function DashboardContent() {
                                         return <pre className="text-[10px] font-mono text-zinc-450">{JSON.stringify(schema, null, 2)}</pre>;
                                       })()}
                                     </div>
+                                  </div>
+                                )}
+
+                                {/* Save / Cancel Documentation Action bar */}
+                                {isEditingDocs && (
+                                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-900">
+                                    <button
+                                      onClick={() => setIsEditingDocs(false)}
+                                      className="px-4 py-2 border border-zinc-800 hover:bg-zinc-850 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={handleSaveDocs}
+                                      disabled={isSavingDocs}
+                                      className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                                    >
+                                      {isSavingDocs ? (
+                                        <>
+                                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                          <span>Saving Documentation...</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Check className="w-3.5 h-3.5" />
+                                          <span>Save Documentation</span>
+                                        </>
+                                      )}
+                                    </button>
                                   </div>
                                 )}
                               </div>
