@@ -103,6 +103,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         isWritable: typeof p.isWritable === 'boolean' ? p.isWritable : false,
         enableToon: typeof p.enableToon === 'boolean' ? p.enableToon : false,
         customDescription: typeof p.customDescription === 'string' ? p.customDescription : undefined,
+        customHeaders: p.customHeaders || {},
       }));
     } else {
       allowedPaths = getAvailablePathsFromSpec(rawSpec);
@@ -249,7 +250,9 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
         isWritable: typeof p.isWritable === 'boolean' ? p.isWritable : false,
         enableToon: typeof p.enableToon === 'boolean' ? p.enableToon : false,
         customDescription: typeof p.customDescription === 'string' ? p.customDescription : undefined,
+        customHeaders: p.customHeaders || {},
       }));
+      api.markModified('allowedPaths');
     }
 
     // Direct Token-Saver parameter optimization tweaks
