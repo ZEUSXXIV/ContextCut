@@ -56,7 +56,9 @@ function DashboardContent() {
     BACKEND_URL,
     resetWizard,
     setConnectMethod,
-    setTriggerCurlImport
+    setTriggerCurlImport,
+    theme,
+    setTheme
   } = useDashboard();
 
   // Multi-tab REST Client manager hook
@@ -525,10 +527,10 @@ function DashboardContent() {
   });
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black overflow-hidden relative">
+    <div className="min-h-screen bg-theme-bg-main text-theme-text-primary flex flex-col font-sans selection:bg-theme-accent/30 selection:text-theme-text-primary overflow-hidden relative">
       {/* Premium Ambient Background Glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none translate-y-1/3"></div>
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-theme-accent/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-theme-accent/5 rounded-full blur-[150px] pointer-events-none translate-y-1/3"></div>
 
       {/* Sandbox Connection indicator banner */}
       {isDemoMode && (
@@ -547,12 +549,12 @@ function DashboardContent() {
       )}
 
       {/* Persistent Global Nav Menu */}
-      <header className="border-b border-zinc-800/80 bg-zinc-950/60 backdrop-blur-md sticky top-0 z-40 px-6 py-4 shrink-0">
+      <header className="border-b border-theme-border bg-theme-bg-side/60 backdrop-blur-md sticky top-0 z-40 px-6 py-4 shrink-0">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-lg blur opacity-70 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-              <div className="relative bg-zinc-900 border border-zinc-800 p-2.5 rounded-lg text-cyan-400">
+              <div className="absolute -inset-1 bg-gradient-to-r from-theme-accent to-theme-accent-hover rounded-lg blur opacity-70 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+              <div className="relative bg-theme-bg-pane border border-theme-border p-2.5 rounded-lg text-theme-accent">
                 <Cpu className="w-6 h-6 animate-pulse" />
               </div>
             </div>
@@ -561,7 +563,7 @@ function DashboardContent() {
                 <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
                   ContextCut
                 </h1>
-                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 bg-zinc-800 text-zinc-400 border border-zinc-700 rounded">
+                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 bg-zinc-800 text-theme-text-secondary border border-zinc-700 rounded">
                   v1.2.0
                 </span>
               </div>
@@ -570,7 +572,7 @@ function DashboardContent() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-zinc-900/60 border border-zinc-850 px-3.5 py-1.5 rounded-xl text-xs font-medium">
+            <div className="flex items-center gap-2 bg-theme-bg-pane/60 border border-theme-border px-3.5 py-1.5 rounded-xl text-xs font-medium">
               <Wifi className={`w-3.5 h-3.5 ${isBackendConnected ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
               <span className={isBackendConnected ? 'text-emerald-400' : 'text-amber-400'}>
                 {isBackendConnected ? 'LIVE GATEWAY' : 'SANDBOX'}
@@ -580,7 +582,7 @@ function DashboardContent() {
             {user && (
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-500/30 rounded-xl text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-theme-bg-pane hover:bg-red-500/20 text-theme-text-secondary hover:text-red-400 border border-theme-border hover:border-red-500/30 rounded-xl text-xs font-semibold tracking-wide transition-all duration-300 cursor-pointer"
                 title="Log out of session"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -595,9 +597,9 @@ function DashboardContent() {
       <div className="flex-1 flex overflow-hidden relative z-10 w-full h-[calc(100vh-80px)]">
         
         {/* Left Pane: Collections Sidebar Tree */}
-        <aside className="w-80 border-r border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md flex flex-col overflow-y-auto custom-scrollbar select-none p-4 space-y-4 shrink-0">
+        <aside className="w-80 border-r border-theme-border bg-theme-bg-side/40 backdrop-blur-md flex flex-col overflow-y-auto custom-scrollbar select-none p-4 space-y-4 shrink-0">
           <div className="flex items-center justify-between relative">
-            <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest">Workspace</span>
+            <span className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-widest">Workspace</span>
             <div className="flex items-center gap-1.5">
               {/* Swagger Import Quick Button */}
               <button
@@ -607,7 +609,7 @@ function DashboardContent() {
                   router.push('/dashboard/connect');
                 }}
                 title="Import OpenAPI / Swagger Spec"
-                className="p-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-cyan-400 rounded-lg transition-all duration-200 cursor-pointer"
+                className="p-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-theme-text-secondary hover:text-theme-accent rounded-lg transition-all duration-200 cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5" />
               </button>
@@ -621,7 +623,7 @@ function DashboardContent() {
                   router.push('/dashboard/connect');
                 }}
                 title="Import cURL Command"
-                className="p-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-400 hover:text-amber-400 rounded-lg transition-all duration-200 cursor-pointer"
+                className="p-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-theme-text-secondary hover:text-amber-400 rounded-lg transition-all duration-200 cursor-pointer"
               >
                 <Terminal className="w-3.5 h-3.5" />
               </button>
@@ -632,8 +634,8 @@ function DashboardContent() {
                   title="More Connection Options"
                   className={`p-1 border rounded-lg transition-all duration-200 cursor-pointer ${
                     showAddMenu
-                      ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
-                      : 'bg-zinc-900 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 border-zinc-800'
+                      ? 'bg-theme-accent-dim text-theme-accent border-theme-accent/30'
+                      : 'bg-theme-bg-pane text-theme-text-secondary hover:text-emerald-400 hover:bg-zinc-800 border-theme-border'
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -646,7 +648,7 @@ function DashboardContent() {
                     className="fixed inset-0 z-45" 
                     onClick={() => setShowAddMenu(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-zinc-950 border border-zinc-850 shadow-2xl p-1.5 z-50 animate-fade-in divide-y divide-zinc-900/50">
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-theme-bg-side border border-theme-border shadow-2xl p-1.5 z-50 animate-fade-in divide-y divide-zinc-900/50">
                     <div className="py-1">
                       <button
                         onClick={() => {
@@ -655,9 +657,9 @@ function DashboardContent() {
                           setShowAddMenu(false);
                           router.push('/dashboard/connect');
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-theme-bg-pane rounded-lg transition-colors cursor-pointer"
                       >
-                        <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                        <Globe className="w-3.5 h-3.5 text-theme-accent" />
                         <div className="flex flex-col">
                           <span>Import OpenAPI / Swagger</span>
                           <span className="text-[9px] text-zinc-500 font-medium">Connect via spec URL</span>
@@ -672,7 +674,7 @@ function DashboardContent() {
                           setShowAddMenu(false);
                           router.push('/dashboard/connect');
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-theme-bg-pane rounded-lg transition-colors cursor-pointer"
                       >
                         <Terminal className="w-3.5 h-3.5 text-amber-400" />
                         <div className="flex flex-col">
@@ -690,7 +692,7 @@ function DashboardContent() {
                           setShowAddMenu(false);
                           router.push('/dashboard/connect');
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white hover:bg-theme-bg-pane rounded-lg transition-colors cursor-pointer"
                       >
                         <Settings className="w-3.5 h-3.5 text-purple-400" />
                         <div className="flex flex-col">
@@ -714,7 +716,7 @@ function DashboardContent() {
               placeholder="Search collections or paths..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-zinc-900/60 border border-zinc-800 rounded-xl text-xs placeholder-zinc-500 text-zinc-100 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-200"
+              className="w-full pl-9 pr-4 py-2 bg-theme-bg-pane/60 border border-theme-border rounded-xl text-xs placeholder-zinc-500 text-theme-text-primary focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-200"
             />
           </div>
 
@@ -724,12 +726,12 @@ function DashboardContent() {
               onClick={() => setActiveTabId('overview')}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-250 ${
                 activeTabId === 'overview' || activeTabId === ''
-                  ? 'bg-zinc-800 text-cyan-400 border border-zinc-700/50'
-                  : 'text-zinc-405 hover:text-zinc-200 hover:bg-zinc-900/30 border border-transparent'
+                  ? 'bg-zinc-800 text-theme-accent border border-zinc-700/50'
+                  : 'text-zinc-405 hover:text-theme-text-primary hover:bg-theme-bg-pane/30 border border-transparent'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Activity className="w-4 h-4 text-cyan-400" />
+                <Activity className="w-4 h-4 text-theme-accent" />
                 <span>System Overview</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 opacity-60" />
@@ -740,7 +742,7 @@ function DashboardContent() {
           <div className="border-t border-zinc-900 pt-3 flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Collections</span>
-              <span className="text-[9px] px-1.5 py-0.2 bg-zinc-900 text-zinc-450 rounded-full font-mono font-bold">
+              <span className="text-[9px] px-1.5 py-0.2 bg-theme-bg-pane text-zinc-450 rounded-full font-mono font-bold">
                 {gateways.length}
               </span>
             </div>
@@ -768,13 +770,13 @@ function DashboardContent() {
                   return (
                     <div key={id} className="space-y-1">
                       {/* Collection root row */}
-                      <div className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-zinc-900/40 transition-all duration-200">
+                      <div className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-theme-bg-pane/40 transition-all duration-200">
                         <button
                           onClick={() => toggleGatewayExpand(id)}
                           className="flex-1 flex items-center gap-2 text-xs font-semibold text-zinc-300 hover:text-white transition-colors text-left truncate"
                         >
                           <ChevronRight className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                          <Folder className="w-4 h-4 text-cyan-400 fill-cyan-400/10 shrink-0" />
+                          <Folder className="w-4 h-4 text-theme-accent fill-theme-accent/10 shrink-0" />
                           <span className="truncate max-w-[125px]" title={gt.name}>{gt.name}</span>
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasActive ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-650'}`} />
                         </button>
@@ -787,7 +789,7 @@ function DashboardContent() {
                               router.push('/dashboard/connect');
                             }}
                             title="Edit Gateway Spec & Options"
-                            className="p-1 text-zinc-500 hover:text-cyan-400 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                            className="p-1 text-zinc-500 hover:text-theme-accent hover:bg-zinc-800 rounded transition-colors cursor-pointer"
                           >
                             <Settings className="w-3.5 h-3.5" />
                           </button>
@@ -803,7 +805,7 @@ function DashboardContent() {
 
                       {/* Tool route child paths */}
                       {isExpanded && (
-                        <div className="pl-6 border-l border-zinc-850/60 ml-3.5 space-y-0.5 pt-0.5 pb-1">
+                        <div className="pl-6 border-l border-theme-border/60 ml-3.5 space-y-0.5 pt-0.5 pb-1">
                           {filteredPaths.map((p: any, idx: number) => {
                             const methodColorMap: Record<string, string> = {
                               get: 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10',
@@ -812,7 +814,7 @@ function DashboardContent() {
                               delete: 'text-red-400 bg-red-500/5 border-red-500/10',
                               patch: 'text-purple-400 bg-purple-500/5 border-purple-500/10'
                             };
-                            const colorClass = methodColorMap[p.method.toLowerCase()] || 'text-zinc-400 bg-zinc-500/5';
+                            const colorClass = methodColorMap[p.method.toLowerCase()] || 'text-theme-text-secondary bg-zinc-500/5';
                             const isTabActive = activeTabId === `${id}-${p.method.toUpperCase()}-${p.path}`;
 
                             return (
@@ -821,8 +823,8 @@ function DashboardContent() {
                                 onClick={() => openTab(id, gt.name, p.path, p.method, p.customDescription || '')}
                                 className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] font-mono transition-all text-left ${
                                   isTabActive
-                                    ? 'bg-cyan-500/10 text-cyan-300 font-bold border-l-2 border-l-cyan-400 pl-1.5'
-                                    : 'text-zinc-450 hover:text-zinc-200 hover:bg-zinc-900/30'
+                                    ? 'bg-theme-accent-dim text-theme-accent font-bold border-l-2 border-l-theme-accent pl-1.5'
+                                    : 'text-zinc-450 hover:text-theme-text-primary hover:bg-theme-bg-pane/30'
                                 }`}
                               >
                                 <div className="flex items-center gap-1.5 truncate">
@@ -850,23 +852,62 @@ function DashboardContent() {
               </div>
             )}
           </div>
+          
+          {/* Visual Theme Picker Footer */}
+          <div className="mt-auto border-t border-theme-border/50 pt-3.5 pb-0.5 shrink-0 space-y-2.5">
+            <span className="text-[9px] font-bold text-theme-text-secondary uppercase tracking-widest block pl-1">
+              Active Theme
+            </span>
+            <div className="flex flex-wrap gap-1.5 pl-0.5">
+              {[
+                { id: 'dracula', name: 'Dracula Matte', primaryColor: '#bd93f9', secondaryColor: '#282a36' },
+                { id: 'cyberpunk', name: 'Cyberpunk Neon', primaryColor: '#00f0ff', secondaryColor: '#09090b' },
+                { id: 'nord', name: 'Nordic Frost', primaryColor: '#88c0d0', secondaryColor: '#2e3440' },
+                { id: 'monokai', name: 'Monokai Retro', primaryColor: '#a6e22e', secondaryColor: '#1e1f1c' },
+                { id: 'tokyo', name: 'Tokyo Night', primaryColor: '#7aa2f7', secondaryColor: '#16161e' }
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTheme(t.id)}
+                  title={t.name}
+                  className={`group relative flex items-center justify-center p-1 rounded-xl transition-all duration-300 border hover:scale-105 cursor-pointer ${
+                    theme === t.id
+                      ? 'border-theme-accent bg-theme-accent-dim'
+                      : 'border-theme-border bg-theme-bg-pane/30 hover:border-theme-text-secondary font-semibold'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 px-1.5 py-0.5">
+                    {/* Colored preview circle split diagonally */}
+                    <div className="w-3 h-3 rounded-full overflow-hidden flex border border-zinc-700/50 shrink-0">
+                      <div className="w-1/2 h-full" style={{ backgroundColor: t.secondaryColor }} />
+                      <div className="w-1/2 h-full" style={{ backgroundColor: t.primaryColor }} />
+                    </div>
+                    <span className="text-[10px] font-bold text-theme-text-secondary group-hover:text-theme-text-primary transition-colors font-sans pr-1">
+                      {t.id.charAt(0).toUpperCase() + t.id.slice(1)}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </aside>
 
         {/* Right Pane: Central Workspace Multi-Tab and Request Builder */}
-        <main className="flex-1 flex flex-col bg-zinc-900/15 overflow-hidden">
+        <main className="flex-1 flex flex-col bg-theme-bg-pane/15 overflow-hidden">
           
           {/* Tab Header Selector */}
-          <div className="bg-zinc-950 border-b border-zinc-800/80 flex items-center overflow-x-auto custom-scrollbar select-none h-11 shrink-0">
+          <div className="bg-theme-bg-side border-b border-theme-border flex items-center overflow-x-auto custom-scrollbar select-none h-11 shrink-0">
             {/* Hardcoded Overview Tab */}
             <button
               onClick={() => setActiveTabId('overview')}
               className={`flex items-center gap-1.5 px-4 h-full text-xs font-semibold select-none cursor-pointer border-r border-zinc-900 transition-colors shrink-0 ${
                 activeTabId === 'overview' || activeTabId === ''
-                  ? 'bg-[#09090b] text-cyan-400 border-t-2 border-t-cyan-500 font-bold'
-                  : 'text-zinc-400 hover:bg-zinc-900/40 hover:text-white'
+                  ? 'bg-theme-bg-main text-theme-accent border-t-2 border-t-theme-accent font-bold'
+                  : 'text-theme-text-secondary hover:bg-theme-bg-pane/40 hover:text-white'
               }`}
             >
-              <Activity className="w-3.5 h-3.5 text-cyan-400" />
+              <Activity className="w-3.5 h-3.5 text-theme-accent" />
               <span>Overview</span>
             </button>
 
@@ -880,7 +921,7 @@ function DashboardContent() {
                 DELETE: 'text-red-400',
                 PATCH: 'text-purple-400'
               };
-              const colorClass = methodColorMap[t.method.toUpperCase()] || 'text-zinc-400';
+              const colorClass = methodColorMap[t.method.toUpperCase()] || 'text-theme-text-secondary';
 
               return (
                 <div
@@ -888,8 +929,8 @@ function DashboardContent() {
                   onClick={() => setActiveTabId(t.id)}
                   className={`flex items-center gap-2 px-4 h-full text-xs font-semibold select-none cursor-pointer border-r border-zinc-900 transition-colors group relative shrink-0 ${
                     isActive
-                      ? 'bg-[#09090b] text-cyan-400 border-t-2 border-t-cyan-500 font-bold'
-                      : 'text-zinc-400 hover:bg-zinc-900/40 hover:text-white'
+                      ? 'bg-theme-bg-main text-theme-accent border-t-2 border-t-theme-accent font-bold'
+                      : 'text-theme-text-secondary hover:bg-theme-bg-pane/40 hover:text-white'
                   }`}
                 >
                   <span className={`text-[9px] font-black tracking-tight ${colorClass}`}>
@@ -903,7 +944,7 @@ function DashboardContent() {
                       e.stopPropagation();
                       closeTab(t.id);
                     }}
-                    className="p-0.5 rounded text-zinc-550 hover:text-red-400 hover:bg-zinc-800 opacity-60 group-hover:opacity-100 transition-all cursor-pointer"
+                    className="p-0.5 rounded text-theme-text-secondary hover:text-red-400 hover:bg-zinc-800 opacity-60 group-hover:opacity-100 transition-all cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -922,7 +963,7 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   
                   {/* volume routed */}
-                  <div className="relative group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/30 backdrop-blur-md p-6 flex items-center justify-between hover:border-zinc-700/50 transition-all duration-300">
+                  <div className="relative group overflow-hidden rounded-2xl border border-theme-border bg-theme-bg-side/30 backdrop-blur-md p-6 flex items-center justify-between hover:border-zinc-700/50 transition-all duration-300">
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-500 to-blue-600"></div>
                     <div className="space-y-2">
                       <span className="text-zinc-500 text-xs font-bold tracking-wider uppercase block">
@@ -936,15 +977,15 @@ function DashboardContent() {
                           +12.4%
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-400">Context operations successfully parsed</p>
+                      <p className="text-xs text-theme-text-secondary">Context operations successfully parsed</p>
                     </div>
-                    <div className="p-4 bg-cyan-500/5 border border-cyan-500/15 rounded-xl text-cyan-400">
+                    <div className="p-4 bg-cyan-500/5 border border-cyan-500/15 rounded-xl text-theme-accent">
                       <Activity className="w-6 h-6 animate-pulse" />
                     </div>
                   </div>
 
                   {/* context savings */}
-                  <div className="relative group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/30 backdrop-blur-md p-6 flex items-center justify-between hover:border-zinc-700/50 transition-all duration-300">
+                  <div className="relative group overflow-hidden rounded-2xl border border-theme-border bg-theme-bg-side/30 backdrop-blur-md p-6 flex items-center justify-between hover:border-zinc-700/50 transition-all duration-300">
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-500 to-teal-600"></div>
                     <div className="space-y-2">
                       <span className="text-zinc-500 text-xs font-bold tracking-wider uppercase block">
@@ -958,7 +999,7 @@ function DashboardContent() {
                           76.8% Saved
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-400">Response payload tokens saved</p>
+                      <p className="text-xs text-theme-text-secondary">Response payload tokens saved</p>
                     </div>
                     <div className="p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-xl text-emerald-400">
                       <Database className="w-6 h-6" />
@@ -966,7 +1007,7 @@ function DashboardContent() {
                   </div>
 
                   {/* hosted gateways */}
-                  <div className="relative group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/30 backdrop-blur-md p-6 flex items-center justify-between hover:border-zinc-700/50 transition-all duration-300">
+                  <div className="relative group overflow-hidden rounded-2xl border border-theme-border bg-theme-bg-side/30 backdrop-blur-md p-6 flex items-center justify-between hover:border-zinc-700/50 transition-all duration-300">
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-indigo-600"></div>
                     <div className="space-y-2">
                       <span className="text-zinc-500 text-xs font-bold tracking-wider uppercase block">
@@ -976,11 +1017,11 @@ function DashboardContent() {
                         <span className="text-3xl font-black tracking-tight text-white">
                           {gateways.length}
                         </span>
-                        <span className="text-xs text-zinc-400 font-semibold">
+                        <span className="text-xs text-theme-text-secondary font-semibold">
                           / unlimited
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-400">REST API connectors active</p>
+                      <p className="text-xs text-theme-text-secondary">REST API connectors active</p>
                     </div>
                     <div className="p-4 bg-purple-500/5 border border-purple-500/15 rounded-xl text-purple-400">
                       <Layers className="w-6 h-6" />
@@ -992,10 +1033,10 @@ function DashboardContent() {
                 {/* Sub grid for collections overview list + trace analyzer */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
+                    <div className="flex items-center justify-between border-b border-theme-border pb-4">
                       <div>
                         <h2 className="text-base font-bold tracking-tight text-white">Hosted Connection API Overviews</h2>
-                        <p className="text-xs text-zinc-400">Manage, edit, or copy endpoints exposed as Model Context capabilities.</p>
+                        <p className="text-xs text-theme-text-secondary">Manage, edit, or copy endpoints exposed as Model Context capabilities.</p>
                       </div>
                       <button
                         onClick={() => {
@@ -1009,12 +1050,12 @@ function DashboardContent() {
                     </div>
  
                     {gateways.length === 0 ? (
-                      <div className="border border-dashed border-zinc-800 bg-zinc-950/20 rounded-2xl p-12 text-center space-y-4">
-                        <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto text-zinc-600">
+                      <div className="border border-dashed border-theme-border bg-theme-bg-side/20 rounded-2xl p-12 text-center space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-theme-bg-pane border border-theme-border flex items-center justify-center mx-auto text-zinc-600">
                           <Globe className="w-6 h-6" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm font-bold text-zinc-200">No Collections Connected</p>
+                          <p className="text-sm font-bold text-theme-text-primary">No Collections Connected</p>
                           <p className="text-xs text-zinc-450 max-w-sm mx-auto">
                             Instantly deploy API specs, mock custom endpoints, and test REST parameters downstream via decrypt forwarding proxy.
                           </p>
@@ -1024,7 +1065,7 @@ function DashboardContent() {
                             resetWizard();
                             router.push('/dashboard/connect');
                           }}
-                          className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 text-xs font-semibold rounded-xl text-cyan-400 transition duration-200 cursor-pointer"
+                          className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 text-xs font-semibold rounded-xl text-theme-accent transition duration-200 cursor-pointer"
                         >
                           Connect New Collection
                         </button>
@@ -1038,24 +1079,24 @@ function DashboardContent() {
                           return (
                             <div
                               key={id}
-                              className="group relative rounded-2xl border border-zinc-800/80 bg-zinc-950/25 p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all duration-200"
+                              className="group relative rounded-2xl border border-theme-border bg-theme-bg-side/25 p-5 flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-all duration-200"
                             >
                               <div className="space-y-2">
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="space-y-0.5">
-                                    <h3 className="text-sm font-bold text-white tracking-wide group-hover:text-cyan-300 transition-colors">
+                                    <h3 className="text-sm font-bold text-white tracking-wide group-hover:text-theme-accent transition-colors">
                                       {gt.name}
                                     </h3>
-                                    <p className="text-[10px] text-zinc-550 max-w-[190px] truncate" title={gt.specUrl || gt.openApiUrl}>
+                                    <p className="text-[10px] text-theme-text-secondary max-w-[190px] truncate" title={gt.specUrl || gt.openApiUrl}>
                                       {gt.specUrl || gt.openApiUrl}
                                     </p>
                                   </div>
-                                  <span className={`text-[9px] px-2 py-0.5 rounded border border-zinc-800 font-mono ${gt.isManual ? 'text-purple-400 bg-purple-500/5' : 'text-cyan-400 bg-cyan-500/5'}`}>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded border border-theme-border font-mono ${gt.isManual ? 'text-purple-400 bg-purple-500/5' : 'text-theme-accent bg-cyan-500/5'}`}>
                                     {gt.isManual ? 'Manual Custom' : 'OpenAPI Spec'}
                                   </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 bg-zinc-900/40 p-2.5 rounded-xl border border-zinc-850">
+                                <div className="grid grid-cols-2 gap-3 bg-theme-bg-pane/40 p-2.5 rounded-xl border border-theme-border">
                                   <div className="space-y-0.5">
                                     <span className="text-[8px] uppercase tracking-wider text-zinc-500 font-extrabold">Calls</span>
                                     <p className="text-xs font-black text-white">{gt.totalRequests}</p>
@@ -1078,8 +1119,8 @@ function DashboardContent() {
                                         key={idx}
                                         className={`text-[8px] px-1.5 py-0.5 rounded font-mono ${
                                           p.isEnabled
-                                            ? 'bg-zinc-900 border border-zinc-800 text-zinc-300'
-                                            : 'bg-zinc-950 text-zinc-650 line-through border border-transparent'
+                                            ? 'bg-theme-bg-pane border border-theme-border text-zinc-300'
+                                            : 'bg-theme-bg-side text-zinc-650 line-through border border-transparent'
                                         }`}
                                       >
                                         {p.method.toUpperCase()} {p.path}
@@ -1094,13 +1135,13 @@ function DashboardContent() {
                                   <span className="text-[8px] uppercase tracking-wider text-zinc-500 font-extrabold block">
                                     MCP Connection URI
                                   </span>
-                                  <p className="text-[10px] font-mono text-cyan-400/80 truncate">
+                                  <p className="text-[10px] font-mono text-theme-accent/80 truncate">
                                     {gatewayUrl}
                                   </p>
                                 </div>
                                 <button
                                   onClick={() => copyToClipboard(gatewayUrl, id)}
-                                  className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[10px] text-zinc-400 hover:text-white rounded-lg flex items-center gap-1 transition-all duration-200"
+                                  className="px-2.5 py-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-[10px] text-theme-text-secondary hover:text-white rounded-lg flex items-center gap-1 transition-all duration-200"
                                 >
                                   {copiedId === id ? (
                                     <Check className="w-3 h-3 text-emerald-400" />
@@ -1122,7 +1163,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Footer block */}
-                <div className="pt-8 border-t border-zinc-900 text-[11px] text-zinc-550 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="pt-8 border-t border-zinc-900 text-[11px] text-theme-text-secondary flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p>© 2026 ContextCut Adapter Federation Engine. All rights reserved.</p>
                   <div className="flex items-center gap-6">
                     <a href="https://nextjs.org" target="_blank" className="hover:text-zinc-350 transition-colors">Next.js Framework</a>
@@ -1140,13 +1181,13 @@ function DashboardContent() {
                 <div className="space-y-6 max-w-7xl mx-auto flex flex-col pb-10">
                   
                   {/* Address input block */}
-                  <div className="bg-zinc-950 border border-zinc-800/80 p-3 rounded-2xl flex items-center gap-3 shadow-md">
+                  <div className="bg-theme-bg-side border border-theme-border p-3 rounded-2xl flex items-center gap-3 shadow-md">
                     {/* Method select */}
                     <div className="relative shrink-0">
                       <select
                         value={activeTab.method}
                         onChange={(e) => updateActiveTab({ method: e.target.value })}
-                        className={`bg-zinc-900 border border-zinc-750 px-3 py-2 rounded-xl text-xs font-black tracking-widest cursor-pointer focus:outline-none focus:border-cyan-500/50 appearance-none pr-8 ${
+                        className={`bg-theme-bg-pane border border-zinc-750 px-3 py-2 rounded-xl text-xs font-black tracking-widest cursor-pointer focus:outline-none focus:border-cyan-500/50 appearance-none pr-8 ${
                           activeTab.method === 'GET'
                             ? 'text-emerald-400'
                             : activeTab.method === 'POST'
@@ -1158,13 +1199,13 @@ function DashboardContent() {
                             : 'text-purple-400'
                         }`}
                       >
-                        <option value="GET" className="text-emerald-400 bg-zinc-950 font-bold">GET</option>
-                        <option value="POST" className="text-amber-400 bg-zinc-950 font-bold">POST</option>
-                        <option value="PUT" className="text-blue-400 bg-zinc-950 font-bold">PUT</option>
-                        <option value="DELETE" className="text-red-400 bg-zinc-950 font-bold">DELETE</option>
-                        <option value="PATCH" className="text-purple-400 bg-zinc-950 font-bold">PATCH</option>
+                        <option value="GET" className="text-emerald-400 bg-theme-bg-side font-bold">GET</option>
+                        <option value="POST" className="text-amber-400 bg-theme-bg-side font-bold">POST</option>
+                        <option value="PUT" className="text-blue-400 bg-theme-bg-side font-bold">PUT</option>
+                        <option value="DELETE" className="text-red-400 bg-theme-bg-side font-bold">DELETE</option>
+                        <option value="PATCH" className="text-purple-400 bg-theme-bg-side font-bold">PATCH</option>
                       </select>
-                      <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-3 top-3 pointer-events-none" />
+                      <ChevronDown className="w-3.5 h-3.5 text-theme-text-secondary absolute right-3 top-3 pointer-events-none" />
                     </div>
 
                     {/* URL bar */}
@@ -1174,7 +1215,7 @@ function DashboardContent() {
                         value={urlInputVal}
                         onChange={(e) => handleUrlInputChange(e.target.value)}
                         placeholder="http://localhost:4000/api/endpoint..."
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-200"
+                        className="w-full bg-theme-bg-pane border border-theme-border rounded-xl px-4 py-2 text-xs font-mono text-theme-text-primary placeholder-zinc-650 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-200"
                       />
                     </div>
 
@@ -1199,8 +1240,8 @@ function DashboardContent() {
                   </div>
 
                   {/* Sub-tabs panels - Params, Auth, Headers, Body, Docs */}
-                  <div className="border border-zinc-850 rounded-2xl bg-zinc-950/20 backdrop-blur-md overflow-hidden flex flex-col min-h-[260px] max-h-[400px]">
-                    <div className="bg-zinc-950/60 border-b border-zinc-850 px-4 flex items-center gap-1.5 h-10 select-none shrink-0">
+                  <div className="border border-theme-border rounded-2xl bg-theme-bg-side/20 backdrop-blur-md overflow-hidden flex flex-col min-h-[260px] max-h-[400px]">
+                    <div className="bg-theme-bg-side/60 border-b border-theme-border px-4 flex items-center gap-1.5 h-10 select-none shrink-0">
                       {(['params', 'auth', 'headers', 'body', 'docs'] as const).map((tabName) => {
                         const countBadge =
                           tabName === 'params'
@@ -1215,13 +1256,13 @@ function DashboardContent() {
                             onClick={() => setReqSubTab(tabName)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
                               reqSubTab === tabName
-                                ? 'bg-zinc-900 text-cyan-400 border border-zinc-800'
-                                : 'text-zinc-550 hover:text-zinc-300'
+                                ? 'bg-theme-bg-pane text-theme-accent border border-theme-border'
+                                : 'text-theme-text-secondary hover:text-zinc-300'
                             }`}
                           >
                             <span>{tabName === 'auth' ? 'Authorization' : tabName}</span>
                             {countBadge > 0 && (
-                              <span className="text-[9px] px-1.5 py-0.2 bg-cyan-950 text-cyan-400 rounded-full border border-cyan-800/30 font-mono">
+                              <span className="text-[9px] px-1.5 py-0.2 bg-theme-bg-pane text-theme-accent rounded-full border border-theme-border font-mono">
                                 {countBadge}
                               </span>
                             )}
@@ -1236,20 +1277,20 @@ function DashboardContent() {
                       {reqSubTab === 'params' && (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Query Parameters Table</span>
+                            <span className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-wider">Query Parameters Table</span>
                             <button
                               onClick={handleAddParamRow}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[10px] font-semibold text-zinc-400 hover:text-zinc-200 rounded-lg transition-colors cursor-pointer"
+                              className="flex items-center gap-1 px-2.5 py-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-[10px] font-semibold text-theme-text-secondary hover:text-theme-text-primary rounded-lg transition-colors cursor-pointer"
                             >
                               <Plus className="w-3 h-3" />
                               <span>Add Parameter</span>
                             </button>
                           </div>
 
-                          <div className="border border-zinc-900 rounded-xl overflow-hidden bg-zinc-950/40">
+                          <div className="border border-zinc-900 rounded-xl overflow-hidden bg-theme-bg-side/40">
                             <table className="w-full text-left border-collapse text-xs">
                               <thead>
-                                <tr className="border-b border-zinc-900 bg-zinc-950/80 text-zinc-500 font-bold">
+                                <tr className="border-b border-zinc-900 bg-theme-bg-side/80 text-zinc-500 font-bold">
                                   <th className="px-4 py-2.5 w-1/4">Key</th>
                                   <th className="px-4 py-2.5 w-1/3">Value</th>
                                   <th className="px-4 py-2.5">Description</th>
@@ -1258,14 +1299,14 @@ function DashboardContent() {
                               </thead>
                               <tbody>
                                 {activeTab.queryParams.map((p, idx) => (
-                                  <tr key={idx} className="border-b border-zinc-900 hover:bg-zinc-900/10">
+                                  <tr key={idx} className="border-b border-zinc-900 hover:bg-theme-bg-pane/10">
                                     <td className="p-2">
                                       <input
                                         type="text"
                                         placeholder="key"
                                         value={p.key}
                                         onChange={(e) => handleParamChange(idx, 'key', e.target.value)}
-                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-zinc-850 focus:border-cyan-500/50 focus:bg-zinc-950 focus:outline-none font-mono text-[11px] text-zinc-200"
+                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-theme-border focus:border-cyan-500/50 focus:bg-theme-bg-side focus:outline-none font-mono text-[11px] text-theme-text-primary"
                                       />
                                     </td>
                                     <td className="p-2">
@@ -1274,7 +1315,7 @@ function DashboardContent() {
                                         placeholder="value"
                                         value={p.value}
                                         onChange={(e) => handleParamChange(idx, 'value', e.target.value)}
-                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-zinc-850 focus:border-cyan-500/50 focus:bg-zinc-950 focus:outline-none font-mono text-[11px] text-zinc-200"
+                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-theme-border focus:border-cyan-500/50 focus:bg-theme-bg-side focus:outline-none font-mono text-[11px] text-theme-text-primary"
                                       />
                                     </td>
                                     <td className="p-2">
@@ -1283,13 +1324,13 @@ function DashboardContent() {
                                         placeholder="parameter description"
                                         value={p.description || ''}
                                         onChange={(e) => handleParamChange(idx, 'description', e.target.value)}
-                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-zinc-850 focus:border-cyan-500/50 focus:bg-zinc-950 focus:outline-none text-[11px] text-zinc-300"
+                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-theme-border focus:border-cyan-500/50 focus:bg-theme-bg-side focus:outline-none text-[11px] text-zinc-300"
                                       />
                                     </td>
                                     <td className="p-2 text-center">
                                       <button
                                         onClick={() => handleRemoveParamRow(idx)}
-                                        className="p-1 text-zinc-550 hover:text-red-400 hover:bg-zinc-900 rounded transition-colors"
+                                        className="p-1 text-theme-text-secondary hover:text-red-400 hover:bg-theme-bg-pane rounded transition-colors"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1312,15 +1353,15 @@ function DashboardContent() {
                       {/* Grid 2: Auth */}
                       {reqSubTab === 'auth' && (
                         <div className="space-y-4 max-w-xl">
-                          <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Credential Injections</span>
+                          <span className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-wider block">Credential Injections</span>
                           
                           {(() => {
                             const api = gateways.find((g: any) => (g.id || g._id) === activeTab.gatewayId);
                             return (
-                              <div className="space-y-3 bg-zinc-950/60 p-4 rounded-xl border border-zinc-900 text-xs">
+                              <div className="space-y-3 bg-theme-bg-side/60 p-4 rounded-xl border border-zinc-900 text-xs">
                                 <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
                                   <span className="text-zinc-500 font-bold">Storage Type:</span>
-                                  <span className="font-mono text-cyan-400 bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-800/20 text-[10px]">
+                                  <span className="font-mono text-theme-accent bg-theme-accent-dim px-2 py-0.5 rounded border border-theme-border/20 text-[10px]">
                                     AES-256-GCM SECURED
                                   </span>
                                 </div>
@@ -1332,7 +1373,7 @@ function DashboardContent() {
                                   <span className="text-zinc-500 font-bold">Encrypted Token Value:</span>
                                   <span className="font-mono text-zinc-650">••••••••••••••••••••••••••••••••</span>
                                 </div>
-                                <div className="mt-3 p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-[10px] text-zinc-500 leading-relaxed flex items-start gap-2">
+                                <div className="mt-3 p-3 bg-theme-bg-pane/50 border border-theme-border rounded-lg text-[10px] text-zinc-500 leading-relaxed flex items-start gap-2">
                                   <Shield className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5 animate-pulse" />
                                   <span>
                                     ContextCut operates on zero-token exposure principles. Your sensitive API keys are encrypted at rest and injected directly into target servers on the backend, safeguarding credentials in transit.
@@ -1348,20 +1389,20 @@ function DashboardContent() {
                       {reqSubTab === 'headers' && (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">Custom Request Headers Override</span>
+                            <span className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-wider">Custom Request Headers Override</span>
                             <button
                               onClick={handleAddHeaderRow}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[10px] font-semibold text-zinc-400 hover:text-zinc-200 rounded-lg transition-colors cursor-pointer"
+                              className="flex items-center gap-1 px-2.5 py-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-[10px] font-semibold text-theme-text-secondary hover:text-theme-text-primary rounded-lg transition-colors cursor-pointer"
                             >
                               <Plus className="w-3 h-3" />
                               <span>Add Header</span>
                             </button>
                           </div>
 
-                          <div className="border border-zinc-900 rounded-xl overflow-hidden bg-zinc-950/40">
+                          <div className="border border-zinc-900 rounded-xl overflow-hidden bg-theme-bg-side/40">
                             <table className="w-full text-left border-collapse text-xs">
                               <thead>
-                                <tr className="border-b border-zinc-900 bg-zinc-950/80 text-zinc-500 font-bold">
+                                <tr className="border-b border-zinc-900 bg-theme-bg-side/80 text-zinc-500 font-bold">
                                   <th className="px-4 py-2.5 w-1/4">Key Override</th>
                                   <th className="px-4 py-2.5 w-1/3">Value Override</th>
                                   <th className="px-4 py-2.5">Description</th>
@@ -1370,14 +1411,14 @@ function DashboardContent() {
                               </thead>
                               <tbody>
                                 {activeTab.headers.map((h, idx) => (
-                                  <tr key={idx} className="border-b border-zinc-900 hover:bg-zinc-900/10">
+                                  <tr key={idx} className="border-b border-zinc-900 hover:bg-theme-bg-pane/10">
                                     <td className="p-2">
                                       <input
                                         type="text"
                                         placeholder="x-header"
                                         value={h.key}
                                         onChange={(e) => handleHeaderChange(idx, 'key', e.target.value)}
-                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-zinc-850 focus:border-cyan-500/50 focus:bg-zinc-950 focus:outline-none font-mono text-[11px] text-zinc-200"
+                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-theme-border focus:border-cyan-500/50 focus:bg-theme-bg-side focus:outline-none font-mono text-[11px] text-theme-text-primary"
                                       />
                                     </td>
                                     <td className="p-2">
@@ -1386,7 +1427,7 @@ function DashboardContent() {
                                         placeholder="override-value"
                                         value={h.value}
                                         onChange={(e) => handleHeaderChange(idx, 'value', e.target.value)}
-                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-zinc-850 focus:border-cyan-500/50 focus:bg-zinc-950 focus:outline-none font-mono text-[11px] text-zinc-200"
+                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-theme-border focus:border-cyan-500/50 focus:bg-theme-bg-side focus:outline-none font-mono text-[11px] text-theme-text-primary"
                                       />
                                     </td>
                                     <td className="p-2">
@@ -1395,13 +1436,13 @@ function DashboardContent() {
                                         placeholder="Header notes"
                                         value={h.description || ''}
                                         onChange={(e) => handleHeaderChange(idx, 'description', e.target.value)}
-                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-zinc-850 focus:border-cyan-500/50 focus:bg-zinc-950 focus:outline-none text-[11px] text-zinc-350"
+                                        className="w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-theme-border focus:border-cyan-500/50 focus:bg-theme-bg-side focus:outline-none text-[11px] text-zinc-350"
                                       />
                                     </td>
                                     <td className="p-2 text-center">
                                       <button
                                         onClick={() => handleRemoveHeaderRow(idx)}
-                                        className="p-1 text-zinc-550 hover:text-red-400 hover:bg-zinc-900 rounded transition-colors"
+                                        className="p-1 text-theme-text-secondary hover:text-red-400 hover:bg-theme-bg-pane rounded transition-colors"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1426,7 +1467,7 @@ function DashboardContent() {
                         <div className="space-y-3 flex-1 flex flex-col min-h-[160px]">
                           <div className="flex items-center justify-between select-none">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider">JSON Body Payload</span>
+                              <span className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-wider">JSON Body Payload</span>
                               {activeTab.body.trim() !== '' && (() => {
                                 try {
                                   JSON.parse(activeTab.body);
@@ -1439,7 +1480,7 @@ function DashboardContent() {
                             {activeTab.body.trim() !== '' && (
                               <button
                                 onClick={handleFormatBodyJson}
-                                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[10px] font-semibold text-zinc-400 hover:text-zinc-200 rounded-lg transition-colors cursor-pointer"
+                                className="px-2.5 py-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-[10px] font-semibold text-theme-text-secondary hover:text-theme-text-primary rounded-lg transition-colors cursor-pointer"
                               >
                                 Format Pretty
                               </button>
@@ -1450,7 +1491,7 @@ function DashboardContent() {
                             value={activeTab.body}
                             onChange={(e) => updateActiveTab({ body: e.target.value })}
                             placeholder={`{\n  "field": "value"\n}`}
-                            className="w-full flex-1 min-h-[100px] bg-zinc-900/60 border border-zinc-800 rounded-xl p-3 font-mono text-xs text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-200 resize-none"
+                            className="w-full flex-1 min-h-[100px] bg-theme-bg-pane/60 border border-theme-border rounded-xl p-3 font-mono text-xs text-theme-text-primary placeholder-zinc-650 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-200 resize-none"
                           />
                         </div>
                       )}
@@ -1473,27 +1514,27 @@ function DashboardContent() {
                                   {isEditingDocs ? (
                                     <div className="space-y-3 w-full mr-4">
                                       <div className="space-y-1">
-                                        <label className="text-[9px] font-bold text-zinc-550 uppercase tracking-wider block">Endpoint Summary</label>
+                                        <label className="text-[9px] font-bold text-theme-text-secondary uppercase tracking-wider block">Endpoint Summary</label>
                                         <input
                                           type="text"
                                           value={editDocsSummary}
                                           onChange={(e) => setEditDocsSummary(e.target.value)}
-                                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-semibold"
+                                          className="w-full bg-theme-bg-pane border border-theme-border rounded-xl px-3 py-1.5 text-xs text-theme-text-primary outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-semibold"
                                         />
                                       </div>
                                       <div className="space-y-1">
-                                        <label className="text-[9px] font-bold text-zinc-550 uppercase tracking-wider block">Detailed Tool Description</label>
+                                        <label className="text-[9px] font-bold text-theme-text-secondary uppercase tracking-wider block">Detailed Tool Description</label>
                                         <textarea
                                           value={editDocsDescription}
                                           onChange={(e) => setEditDocsDescription(e.target.value)}
-                                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all h-16 resize-none leading-relaxed"
+                                          className="w-full bg-theme-bg-pane border border-theme-border rounded-xl px-3 py-1.5 text-xs text-theme-text-primary outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all h-16 resize-none leading-relaxed"
                                         />
                                       </div>
                                     </div>
                                   ) : (
                                     <div className="space-y-1">
                                       <h3 className="text-sm font-bold text-white tracking-wide">{docs.summary}</h3>
-                                      {docs.description && <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{docs.description}</p>}
+                                      {docs.description && <p className="text-theme-text-secondary text-xs mt-1 leading-relaxed">{docs.description}</p>}
                                     </div>
                                   )}
                                   
@@ -1502,7 +1543,7 @@ function DashboardContent() {
                                     className={`px-3 py-1.5 border rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
                                       isEditingDocs
                                         ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white'
-                                        : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-zinc-400 hover:text-cyan-400 hover:border-cyan-500/20'
+                                        : 'bg-theme-bg-pane hover:bg-zinc-850 border-theme-border text-theme-text-secondary hover:text-theme-accent hover:border-theme-accent/20'
                                     }`}
                                   >
                                     <Settings className="w-3.5 h-3.5" />
@@ -1513,10 +1554,10 @@ function DashboardContent() {
                                 {docs.parameters && docs.parameters.length > 0 && (
                                   <div className="space-y-2">
                                     <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Query / Path parameters</span>
-                                    <div className="border border-zinc-900 rounded-xl overflow-hidden bg-zinc-950/40">
+                                    <div className="border border-zinc-900 rounded-xl overflow-hidden bg-theme-bg-side/40">
                                       <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                          <tr className="bg-zinc-950/80 border-b border-zinc-900 text-zinc-550 font-bold">
+                                          <tr className="bg-theme-bg-side/80 border-b border-zinc-900 text-theme-text-secondary font-bold">
                                             <th className="px-3 py-2 w-1/4">Name</th>
                                             <th className="px-3 py-2 w-16">In</th>
                                             <th className="px-3 py-2 w-16">Type</th>
@@ -1526,8 +1567,8 @@ function DashboardContent() {
                                         </thead>
                                         <tbody>
                                           {(isEditingDocs ? editDocsParameters : (docs.parameters || [])).map((param: any, pidx: number) => (
-                                            <tr key={pidx} className="border-b border-zinc-900 hover:bg-zinc-900/5">
-                                              <td className="px-3 py-2 font-mono text-[11px] text-cyan-400 font-bold">
+                                            <tr key={pidx} className="border-b border-zinc-900 hover:bg-theme-bg-pane/5">
+                                              <td className="px-3 py-2 font-mono text-[11px] text-theme-accent font-bold">
                                                 {isEditingDocs ? (
                                                   <input
                                                     type="text"
@@ -1537,13 +1578,13 @@ function DashboardContent() {
                                                       updated[pidx] = { ...updated[pidx], name: e.target.value };
                                                       setEditDocsParameters(updated);
                                                     }}
-                                                    className="w-full bg-zinc-900 border border-zinc-850 rounded px-2 py-1 text-[11px] text-cyan-455 font-bold outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+                                                    className="w-full bg-theme-bg-pane border border-theme-border rounded px-2 py-1 text-[11px] text-theme-accent font-bold outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
                                                   />
                                                 ) : (
                                                   param.name
                                                 )}
                                               </td>
-                                              <td className="px-3 py-2 font-mono text-[10px] text-zinc-400">
+                                              <td className="px-3 py-2 font-mono text-[10px] text-theme-text-secondary">
                                                 {isEditingDocs ? (
                                                   <select
                                                     value={param.in ?? 'query'}
@@ -1552,7 +1593,7 @@ function DashboardContent() {
                                                       updated[pidx] = { ...updated[pidx], in: e.target.value };
                                                       setEditDocsParameters(updated);
                                                     }}
-                                                    className="w-full bg-zinc-900 border border-zinc-850 rounded px-1 px-1.5 py-1 text-[11px] text-zinc-300 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+                                                    className="w-full bg-theme-bg-pane border border-theme-border rounded px-1 px-1.5 py-1 text-[11px] text-zinc-300 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
                                                   >
                                                     <option value="query">query</option>
                                                     <option value="path">path</option>
@@ -1563,7 +1604,7 @@ function DashboardContent() {
                                                   param.in
                                                 )}
                                               </td>
-                                              <td className="px-3 py-2 font-mono text-[10px] text-zinc-400">
+                                              <td className="px-3 py-2 font-mono text-[10px] text-theme-text-secondary">
                                                 {isEditingDocs ? (
                                                   <select
                                                     value={param.schema?.type || param.type || 'string'}
@@ -1574,7 +1615,7 @@ function DashboardContent() {
                                                       updated[pidx] = { ...updated[pidx], type: newType, schema };
                                                       setEditDocsParameters(updated);
                                                     }}
-                                                    className="w-full bg-zinc-900 border border-zinc-850 rounded px-1 px-1.5 py-1 text-[11px] text-zinc-300 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
+                                                    className="w-full bg-theme-bg-pane border border-theme-border rounded px-1 px-1.5 py-1 text-[11px] text-zinc-300 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all font-mono"
                                                   >
                                                     <option value="string">string</option>
                                                     <option value="number">number</option>
@@ -1599,13 +1640,13 @@ function DashboardContent() {
                                                     className={`text-[9px] px-2 py-0.5 rounded font-extrabold cursor-pointer transition-all border ${
                                                       param.required
                                                         ? 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20'
-                                                        : 'text-zinc-500 bg-zinc-900 border-zinc-800 hover:text-zinc-300'
+                                                        : 'text-zinc-500 bg-theme-bg-pane border-theme-border hover:text-zinc-300'
                                                     }`}
                                                   >
                                                     {param.required ? 'YES' : 'NO'}
                                                   </button>
                                                 ) : (
-                                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${param.required ? 'text-amber-400 bg-amber-500/5' : 'text-zinc-650 bg-zinc-950'}`}>
+                                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${param.required ? 'text-amber-400 bg-amber-500/5' : 'text-zinc-650 bg-theme-bg-side'}`}>
                                                     {param.required ? 'YES' : 'NO'}
                                                   </span>
                                                 )}
@@ -1621,7 +1662,7 @@ function DashboardContent() {
                                                       setEditDocsParameters(updated);
                                                     }}
                                                     placeholder="Provide parameter guideline for the LLM..."
-                                                    className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-[11px] text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+                                                    className="w-full bg-theme-bg-pane border border-theme-border rounded px-2.5 py-1 text-[11px] text-theme-text-primary outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
                                                   />
                                                 ) : (
                                                   param.description || 'No description.'
@@ -1637,14 +1678,14 @@ function DashboardContent() {
 
                                 {docs.requestBody && docs.requestBody.content?.['application/json']?.schema && (
                                   <div className="space-y-2">
-                                    <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Expected Request Body properties</span>
-                                    <div className="border border-zinc-900 rounded-xl overflow-hidden bg-zinc-950/40 p-4">
+                                    <span className="text-[10px] font-bold text-theme-text-secondary uppercase tracking-wider block">Expected Request Body properties</span>
+                                    <div className="border border-zinc-900 rounded-xl overflow-hidden bg-theme-bg-side/40 p-4">
                                       {(() => {
                                         const schema = docs.requestBody.content['application/json'].schema;
                                         if (schema.properties) {
                                           return (
                                             <div className="space-y-3">
-                                              <div className="text-[11px] text-zinc-550">
+                                              <div className="text-[11px] text-theme-text-secondary">
                                                 Body Format: <span className="font-mono font-bold text-white">{schema.type || 'object'}</span>
                                               </div>
                                               <div className="grid grid-cols-1 gap-2.5">
@@ -1652,9 +1693,9 @@ function DashboardContent() {
                                                   const prop = schema.properties[propKey];
                                                   const isReq = schema.required?.includes(propKey);
                                                   return (
-                                                    <div key={propKey} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 p-2 bg-zinc-900/30 border border-zinc-900 rounded-lg">
+                                                    <div key={propKey} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 p-2 bg-theme-bg-pane/30 border border-zinc-900 rounded-lg">
                                                       <span className="font-mono text-xs text-amber-400 font-bold w-1/4 truncate">{propKey}</span>
-                                                      <span className="font-mono text-[10px] text-zinc-550 w-16">{prop.type || 'string'}</span>
+                                                      <span className="font-mono text-[10px] text-theme-text-secondary w-16">{prop.type || 'string'}</span>
                                                       <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded w-12 text-center shrink-0 ${isReq ? 'text-amber-500 bg-amber-500/5 animate-pulse' : 'text-zinc-650'}`}>
                                                         {isReq ? 'Required' : 'Optional'}
                                                       </span>
@@ -1670,10 +1711,10 @@ function DashboardContent() {
                                                               });
                                                             }}
                                                             placeholder="Provide property guideline for the LLM..."
-                                                            className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-[11px] text-zinc-200 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+                                                            className="w-full bg-theme-bg-pane border border-theme-border rounded px-2.5 py-1 text-[11px] text-theme-text-primary outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
                                                           />
                                                         ) : (
-                                                          <span className="text-[11px] text-zinc-400">{prop.description || 'No property description.'}</span>
+                                                          <span className="text-[11px] text-theme-text-secondary">{prop.description || 'No property description.'}</span>
                                                         )}
                                                       </div>
                                                     </div>
@@ -1694,7 +1735,7 @@ function DashboardContent() {
                                   <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-900">
                                     <button
                                       onClick={() => setIsEditingDocs(false)}
-                                      className="px-4 py-2 border border-zinc-800 hover:bg-zinc-850 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition cursor-pointer"
+                                      className="px-4 py-2 border border-theme-border hover:bg-zinc-850 rounded-xl text-xs font-semibold text-theme-text-secondary hover:text-white transition cursor-pointer"
                                     >
                                       Cancel
                                     </button>
@@ -1726,8 +1767,8 @@ function DashboardContent() {
                   </div>
 
                   {/* Downstream Response pane */}
-                  <div className="border border-zinc-850 rounded-2xl bg-zinc-950/20 backdrop-blur-md overflow-hidden flex flex-col min-h-[300px]">
-                    <div className="bg-zinc-950/60 border-b border-zinc-850 px-4 py-2 flex items-center justify-between select-none h-11 shrink-0">
+                  <div className="border border-theme-border rounded-2xl bg-theme-bg-side/20 backdrop-blur-md overflow-hidden flex flex-col min-h-[300px]">
+                    <div className="bg-theme-bg-side/60 border-b border-theme-border px-4 py-2 flex items-center justify-between select-none h-11 shrink-0">
                       <span className="text-xs font-bold text-zinc-300">Downstream Response Pane</span>
                       
                       {activeTab.response && (
@@ -1739,12 +1780,12 @@ function DashboardContent() {
                           }`}>
                             {activeTab.response!.status} {activeTab.response!.statusText}
                           </span>
-                          <span className="flex items-center gap-1 text-zinc-400">
-                            <Clock className="w-3.5 h-3.5 text-zinc-550" />
+                          <span className="flex items-center gap-1 text-theme-text-secondary">
+                            <Clock className="w-3.5 h-3.5 text-theme-text-secondary" />
                             {activeTab.response!.latencyMs} ms
                           </span>
-                          <span className="flex items-center gap-1 text-zinc-400">
-                            <FileText className="w-3.5 h-3.5 text-zinc-550" />
+                          <span className="flex items-center gap-1 text-theme-text-secondary">
+                            <FileText className="w-3.5 h-3.5 text-theme-text-secondary" />
                             {formatSize(activeTab.response!.sizeBytes)}
                           </span>
                         </div>
@@ -1755,9 +1796,9 @@ function DashboardContent() {
                       {activeTab.isLoading ? (
                         /* Spinner Loader */
                         <div className="flex-1 flex flex-col items-center justify-center py-12 space-y-3">
-                          <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
+                          <RefreshCw className="w-8 h-8 text-theme-accent animate-spin" />
                           <div className="space-y-0.5 text-center">
-                            <p className="text-xs font-bold text-zinc-200 animate-pulse">Relaying request downstream...</p>
+                            <p className="text-xs font-bold text-theme-text-primary animate-pulse">Relaying request downstream...</p>
                             <p className="text-[10px] text-zinc-500">Injecting encrypted key parameters and loading JSON payloads...</p>
                           </div>
                         </div>
@@ -1774,8 +1815,8 @@ function DashboardContent() {
                                     onClick={() => setResSubTab(rTab)}
                                     className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-colors ${
                                       resSubTab === rTab
-                                        ? 'bg-zinc-900 text-cyan-400 border border-zinc-800'
-                                        : 'text-zinc-550 hover:text-zinc-300'
+                                        ? 'bg-theme-bg-pane text-theme-accent border border-theme-border'
+                                        : 'text-theme-text-secondary hover:text-zinc-300'
                                     }`}
                                   >
                                     {rTab === 'toon' ? 'TOON Compression' : rTab === 'body' ? 'Response Body' : rTab}
@@ -1793,7 +1834,7 @@ function DashboardContent() {
                                   navigator.clipboard.writeText(text);
                                   alert('Response payload copied!');
                                 }}
-                                className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[10px] text-zinc-400 hover:text-white rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                                className="px-2.5 py-1 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-[10px] text-theme-text-secondary hover:text-white rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
                               >
                                 <Copy className="w-3.5 h-3.5" />
                                 <span>Copy Response</span>
@@ -1803,7 +1844,7 @@ function DashboardContent() {
 
                           {/* Pretty JSON Response Body */}
                           {resSubTab === 'body' && (
-                            <pre className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 overflow-auto font-mono text-[11px] text-emerald-400 leading-relaxed max-h-[300px] flex-1">
+                            <pre className="bg-theme-bg-side p-4 rounded-xl border border-zinc-900 overflow-auto font-mono text-[11px] text-emerald-400 leading-relaxed max-h-[300px] flex-1">
                               {typeof activeTab.response!.data === 'string'
                                 ? activeTab.response!.data
                                 : JSON.stringify(activeTab.response!.data, null, 2)}
@@ -1812,18 +1853,18 @@ function DashboardContent() {
 
                           {/* Response Headers */}
                           {resSubTab === 'headers' && (
-                            <div className="border border-zinc-900 rounded-xl overflow-hidden bg-zinc-950/40 text-xs flex-1 max-h-[300px] overflow-y-auto">
+                            <div className="border border-zinc-900 rounded-xl overflow-hidden bg-theme-bg-side/40 text-xs flex-1 max-h-[300px] overflow-y-auto">
                               <table className="w-full text-left border-collapse">
                                 <thead>
-                                  <tr className="bg-zinc-950/80 border-b border-zinc-900 text-zinc-550 font-bold">
+                                  <tr className="bg-theme-bg-side/80 border-b border-zinc-900 text-theme-text-secondary font-bold">
                                     <th className="px-4 py-2.5 w-1/3">Header Name</th>
                                     <th className="px-4 py-2.5">Value</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {Object.keys(activeTab.response!.headers || {}).map((hKey) => (
-                                    <tr key={hKey} className="border-b border-zinc-900 hover:bg-zinc-900/10 font-mono text-[11px]">
-                                      <td className="px-4 py-2 text-zinc-400 font-semibold">{hKey}</td>
+                                    <tr key={hKey} className="border-b border-zinc-900 hover:bg-theme-bg-pane/10 font-mono text-[11px]">
+                                      <td className="px-4 py-2 text-theme-text-secondary font-semibold">{hKey}</td>
                                       <td className="px-4 py-2 text-zinc-300 break-all">{activeTab.response!.headers[hKey]}</td>
                                     </tr>
                                   ))}
@@ -1864,14 +1905,14 @@ function DashboardContent() {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
                                   
                                   {/* Original JSON */}
-                                  <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-900 flex flex-col justify-between">
-                                    <span className="text-[8px] uppercase tracking-wider text-zinc-550 font-extrabold block">Original JSON Format</span>
-                                    <span className="text-zinc-400 font-extrabold text-sm block mt-1">{formatSize(rawBytes)}</span>
+                                  <div className="bg-theme-bg-side/60 p-3 rounded-xl border border-zinc-900 flex flex-col justify-between">
+                                    <span className="text-[8px] uppercase tracking-wider text-theme-text-secondary font-extrabold block">Original JSON Format</span>
+                                    <span className="text-theme-text-secondary font-extrabold text-sm block mt-1">{formatSize(rawBytes)}</span>
                                     <span className="text-zinc-655 font-mono text-[9px] block">≈ {rawTokens.toLocaleString()} tokens</span>
                                   </div>
 
                                   {/* TOON Serialization */}
-                                  <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-900 ring-1 ring-emerald-500/20 flex flex-col justify-between relative overflow-hidden">
+                                  <div className="bg-theme-bg-side/60 p-3 rounded-xl border border-zinc-900 ring-1 ring-emerald-500/20 flex flex-col justify-between relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-1.5 h-full bg-emerald-500 animate-pulse" />
                                     <span className="text-[8px] uppercase tracking-wider text-emerald-400/80 font-extrabold block">TOON Serialization</span>
                                     <span className="text-emerald-305 font-extrabold text-sm block mt-1">{formatSize(toonBytes)}</span>
@@ -1879,13 +1920,13 @@ function DashboardContent() {
                                   </div>
 
                                   {/* Token savings ratio */}
-                                  <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-900 ring-1 ring-cyan-500/20 flex flex-col justify-between relative overflow-hidden">
+                                  <div className="bg-theme-bg-side/60 p-3 rounded-xl border border-zinc-900 ring-1 ring-cyan-500/20 flex flex-col justify-between relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-1.5 h-full bg-cyan-500" />
-                                    <span className="text-[8px] uppercase tracking-wider text-cyan-400/80 font-extrabold block">Token savings ratio</span>
+                                    <span className="text-[8px] uppercase tracking-wider text-theme-accent/80 font-extrabold block">Token savings ratio</span>
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-300 font-black text-sm block mt-1">
                                       {savingsPercent}% Savings
                                     </span>
-                                    <span className="text-cyan-600 font-mono text-[9px] block">≈ {savingsRatio.toFixed(1)}x space efficiency</span>
+                                    <span className="text-theme-accent font-mono text-[9px] block">≈ {savingsRatio.toFixed(1)}x space efficiency</span>
                                   </div>
 
                                 </div>
@@ -1893,25 +1934,25 @@ function DashboardContent() {
                                 {/* Pretty TOON format view */}
                                 <div className="space-y-2 flex-1 flex flex-col min-h-0">
                                   <div className="flex items-center justify-between shrink-0">
-                                    <span className="text-[9px] uppercase tracking-wider text-zinc-550 font-bold">Tabular Notation Compression Output</span>
+                                    <span className="text-[9px] uppercase tracking-wider text-theme-text-secondary font-bold">Tabular Notation Compression Output</span>
                                     <button
                                       onClick={() => {
                                         navigator.clipboard.writeText(toonResult);
                                         alert('TOON serialized payload copied!');
                                       }}
-                                      className="px-2 py-0.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-[9px] text-zinc-400 hover:text-white rounded-md flex items-center gap-1 transition-colors cursor-pointer"
+                                      className="px-2 py-0.5 bg-theme-bg-pane hover:bg-zinc-850 border border-theme-border text-[9px] text-theme-text-secondary hover:text-white rounded-md flex items-center gap-1 transition-colors cursor-pointer"
                                     >
                                       <Copy className="w-3 h-3" />
                                       <span>Copy TOON</span>
                                     </button>
                                   </div>
-                                  <pre className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 overflow-auto font-mono text-[11px] text-cyan-400 max-h-[160px] leading-relaxed flex-1">
+                                  <pre className="bg-theme-bg-side p-4 rounded-xl border border-zinc-900 overflow-auto font-mono text-[11px] text-theme-accent max-h-[160px] leading-relaxed flex-1">
                                     {toonResult}
                                   </pre>
                                 </div>
 
-                                <div className="p-3 bg-zinc-950/40 border border-zinc-900 rounded-xl text-[10px] text-zinc-500 leading-relaxed flex items-start gap-2 shrink-0">
-                                  <Info className="w-3.5 h-3.5 text-cyan-500 shrink-0 mt-0.5" />
+                                <div className="p-3 bg-theme-bg-side/40 border border-zinc-900 rounded-xl text-[10px] text-zinc-500 leading-relaxed flex items-start gap-2 shrink-0">
+                                  <Info className="w-3.5 h-3.5 text-theme-accent shrink-0 mt-0.5" />
                                   <span>
                                     💡 <strong>Token savings insight:</strong> Tabular Object-Oriented Notation (TOON) compresses standard raw JSON response feeds (by stripping brackets, quotation bounds, nesting structures, and key paths) into compact lists, helping to conserve context counts by up to 90%.
                                   </span>
@@ -1926,7 +1967,7 @@ function DashboardContent() {
                         <div className="flex-1 flex flex-col items-center justify-center py-16 text-zinc-650 text-xs space-y-4 select-none">
                           <Terminal className="w-10 h-10 text-zinc-800 animate-pulse shrink-0" />
                           <div className="text-center space-y-1">
-                            <p className="font-bold text-zinc-550">Response Console Offline</p>
+                            <p className="font-bold text-theme-text-secondary">Response Console Offline</p>
                             <p className="text-[10px] max-w-sm text-zinc-600">Enter a target address, body payloads, or headers override above, then click "Send" to trigger a functional REST execution Proxy relay.</p>
                           </div>
                         </div>

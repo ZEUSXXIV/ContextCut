@@ -98,6 +98,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
   const [authLoading, setAuthLoading] = useState(false);
   const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
   const [sessionApiKey, setSessionApiKey] = useState<string | null>(null);
+  const [theme, setTheme] = useState<string>('dracula');
 
   // Wizard state
   const [apiUrl, setApiUrl] = useState('');
@@ -604,6 +605,29 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
       prevInput?.focus();
     }
   };
+
+  // Load theme from localStorage on initial mount (client-side)
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('omni_theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Sync theme changes to localStorage and apply CSS class to document element
+  useEffect(() => {
+    localStorage.setItem('omni_theme', theme);
+    const htmlEl = document.documentElement;
+    // Clear any theme-* classes
+    const classes = Array.from(htmlEl.classList);
+    classes.forEach((cls) => {
+      if (cls.startsWith('theme-')) {
+        htmlEl.classList.remove(cls);
+      }
+    });
+    // Add current theme class
+    htmlEl.classList.add(`theme-${theme}`);
+  }, [theme]);
 
   // OTP resend countdown trigger
   useEffect(() => {
@@ -1139,6 +1163,7 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
       credentialValue, setCredentialValue, wizardStep, setWizardStep, newGatewayId, setNewGatewayId,
       copiedId, setCopiedId, selectedTrace, setSelectedTrace, traceTab, setTraceTab,
       enableToonCompression, setEnableToonCompression, editingGateway, setEditingGateway,
+      theme, setTheme,
       connectMethod, setConnectMethod, triggerCurlImport, setTriggerCurlImport, baseUrl, setBaseUrl, customHeadersList, setCustomHeadersList,
       manualEndpoints, setManualEndpoints, synthesizeOpenApiSpec,
       simulatingId, setSimulatingId, isSimulating,

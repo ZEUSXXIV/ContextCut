@@ -1,26 +1,103 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Default theme: Dracula Matte variables */
+  --theme-bg-main: #1e1f29;
+  --theme-bg-side: #282a36;
+  --theme-bg-pane: #21222c;
+  --theme-border: #44475a;
+  --theme-text-primary: #f8f8f2;
+  --theme-text-secondary: #6272a4;
+  --theme-accent: #bd93f9;
+  --theme-accent-hover: #ff79c6;
+  --theme-accent-dim: rgba(189, 147, 249, 0.1);
+
+  --background: var(--theme-bg-main);
+  --foreground: var(--theme-text-primary);
+}
+
+/* Dracula Matte Theme definition */
+.theme-dracula {
+  --theme-bg-main: #1e1f29;
+  --theme-bg-side: #282a36;
+  --theme-bg-pane: #21222c;
+  --theme-border: #44475a;
+  --theme-text-primary: #f8f8f2;
+  --theme-text-secondary: #6272a4;
+  --theme-accent: #bd93f9;
+  --theme-accent-hover: #ff79c6;
+  --theme-accent-dim: rgba(189, 147, 249, 0.1);
+}
+
+/* Cyberpunk Neon Theme definition */
+.theme-cyberpunk {
+  --theme-bg-main: #050507;
+  --theme-bg-side: #09090b;
+  --theme-bg-pane: #111827;
+  --theme-border: #1f2937;
+  --theme-text-primary: #f9fafb;
+  --theme-text-secondary: #94a3b8;
+  --theme-accent: #00f0ff;
+  --theme-accent-hover: #38bdf8;
+  --theme-accent-dim: rgba(0, 240, 255, 0.1);
+}
+
+/* Nordic Frost Theme definition */
+.theme-nord {
+  --theme-bg-main: #2e3440;
+  --theme-bg-side: #3b4252;
+  --theme-bg-pane: #434c5e;
+  --theme-border: #4c566a;
+  --theme-text-primary: #eceff4;
+  --theme-text-secondary: #d8dee9;
+  --theme-accent: #88c0d0;
+  --theme-accent-hover: #8fbcbb;
+  --theme-accent-dim: rgba(136, 192, 208, 0.08);
+}
+
+/* Monokai Retro Theme definition */
+.theme-monokai {
+  --theme-bg-main: #1e1f1c;
+  --theme-bg-side: #272822;
+  --theme-bg-pane: #2c2d27;
+  --theme-border: #3e3d32;
+  --theme-text-primary: #f8f8f0;
+  --theme-text-secondary: #75715e;
+  --theme-accent: #a6e22e;
+  --theme-accent-hover: #f92672;
+  --theme-accent-dim: rgba(166, 226, 46, 0.1);
+}
+
+/* Tokyo Night Theme definition */
+.theme-tokyo {
+  --theme-bg-main: #16161e;
+  --theme-bg-side: #1a1b26;
+  --theme-bg-pane: #1f2335;
+  --theme-border: #3b4261;
+  --theme-text-primary: #c0caf5;
+  --theme-text-secondary: #565f89;
+  --theme-accent: #7aa2f7;
+  --theme-accent-hover: #bb9af7;
+  --theme-accent-dim: rgba(122, 162, 247, 0.1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-theme-bg-main: var(--theme-bg-main);
+  --color-theme-bg-side: var(--theme-bg-side);
+  --color-theme-bg-pane: var(--theme-bg-pane);
+  --color-theme-border: var(--theme-border);
+  --color-theme-text-primary: var(--theme-text-primary);
+  --color-theme-text-secondary: var(--theme-text-secondary);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-accent-hover: var(--theme-accent-hover);
+  --color-theme-accent-dim: var(--theme-accent-dim);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--theme-bg-main);
+  color: var(--theme-text-primary);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
