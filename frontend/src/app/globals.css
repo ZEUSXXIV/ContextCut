@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Default theme: Dracula Matte variables */
-  --theme-bg-main: #1e1f29;
-  --theme-bg-side: #282a36;
-  --theme-bg-pane: #21222c;
-  --theme-border: #44475a;
-  --theme-text-primary: #f8f8f2;
-  --theme-text-secondary: #6272a4;
-  --theme-accent: #bd93f9;
-  --theme-accent-hover: #ff79c6;
-  --theme-accent-dim: rgba(189, 147, 249, 0.1);
+  /* Default theme: Dracula Matte variables (aligned with custom VS Code matte charcoal & cyan/sky-blue) */
+  --theme-bg-main: #181818;
+  --theme-bg-side: #121212;
+  --theme-bg-pane: #1e1e1e;
+  --theme-border: #2d2d2d;
+  --theme-text-primary: #cccccc;
+  --theme-text-secondary: #858585;
+  --theme-accent: #4fc1ff;
+  --theme-accent-hover: #0098ff;
+  --theme-accent-dim: rgba(0, 122, 204, 0.12);
 
   --background: var(--theme-bg-main);
   --foreground: var(--theme-text-primary);
@@ -18,15 +18,15 @@
 
 /* Dracula Matte Theme definition */
 .theme-dracula {
-  --theme-bg-main: #1e1f29;
-  --theme-bg-side: #282a36;
-  --theme-bg-pane: #21222c;
-  --theme-border: #44475a;
-  --theme-text-primary: #f8f8f2;
-  --theme-text-secondary: #6272a4;
-  --theme-accent: #bd93f9;
-  --theme-accent-hover: #ff79c6;
-  --theme-accent-dim: rgba(189, 147, 249, 0.1);
+  --theme-bg-main: #181818;
+  --theme-bg-side: #121212;
+  --theme-bg-pane: #1e1e1e;
+  --theme-border: #2d2d2d;
+  --theme-text-primary: #cccccc;
+  --theme-text-secondary: #858585;
+  --theme-accent: #4fc1ff;
+  --theme-accent-hover: #0098ff;
+  --theme-accent-dim: rgba(0, 122, 204, 0.12);
 }
 
 /* Cyberpunk Neon Theme definition */

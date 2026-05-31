@@ -860,7 +860,7 @@ function DashboardContent() {
             </span>
             <div className="flex flex-wrap gap-1.5 pl-0.5">
               {[
-                { id: 'dracula', name: 'Dracula Matte', primaryColor: '#bd93f9', secondaryColor: '#282a36' },
+                { id: 'dracula', name: 'Dracula Matte', primaryColor: '#4fc1ff', secondaryColor: '#181818' },
                 { id: 'cyberpunk', name: 'Cyberpunk Neon', primaryColor: '#00f0ff', secondaryColor: '#09090b' },
                 { id: 'nord', name: 'Nordic Frost', primaryColor: '#88c0d0', secondaryColor: '#2e3440' },
                 { id: 'monokai', name: 'Monokai Retro', primaryColor: '#a6e22e', secondaryColor: '#1e1f1c' },
