@@ -882,6 +882,88 @@ export function ConnectWizard() {
                                   💡 Overrides standard OpenAPI documentation for this path. Highly recommended for instructing the LLM on complex nested JSON structures.
                                 </p>
                               </div>
+
+                              {/* Path Specific Custom Headers */}
+                              <div className="space-y-2 pt-1 border-t border-zinc-900/60">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                    Custom Headers for this Endpoint
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...availablePaths];
+                                      const currentHeaders = updated[idx].customHeaders || {};
+                                      const nextIdx = Object.keys(currentHeaders).length;
+                                      updated[idx].customHeaders = {
+                                        ...currentHeaders,
+                                        [`Header-Key-${nextIdx + 1}`]: 'value'
+                                      };
+                                      setAvailablePaths(updated);
+                                    }}
+                                    className="text-[9px] font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Plus className="w-2.5 h-2.5" /> Add Header
+                                  </button>
+                                </div>
+
+                                {!p.customHeaders || Object.keys(p.customHeaders).length === 0 ? (
+                                  <p className="text-[9px] text-zinc-600 leading-normal italic">
+                                    No path-specific headers defined. (Inherits connection-level headers)
+                                  </p>
+                                ) : (
+                                  <div className="space-y-2 max-h-36 overflow-y-auto custom-scrollbar p-0.5">
+                                    {Object.entries(p.customHeaders).map(([key, val], hIdx) => (
+                                      <div key={hIdx} className="flex items-center gap-2">
+                                        <input
+                                          type="text"
+                                          value={key}
+                                          placeholder="Header-Name"
+                                          onChange={(e) => {
+                                            const updated = [...availablePaths];
+                                            const headers = { ...updated[idx].customHeaders };
+                                            const newKey = e.target.value;
+                                            if (newKey !== key) {
+                                              delete headers[key];
+                                              headers[newKey] = val;
+                                            }
+                                            updated[idx].customHeaders = headers;
+                                            setAvailablePaths(updated);
+                                          }}
+                                          className="w-1/2 bg-zinc-950/80 border border-zinc-850 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/20 text-[10px] px-2.5 py-1.5 rounded-lg outline-none text-zinc-300 placeholder-zinc-650 font-mono"
+                                        />
+                                        <input
+                                          type="text"
+                                          value={val as string}
+                                          placeholder="Value"
+                                          onChange={(e) => {
+                                            const updated = [...availablePaths];
+                                            const headers = { ...updated[idx].customHeaders };
+                                            headers[key] = e.target.value;
+                                            updated[idx].customHeaders = headers;
+                                            setAvailablePaths(updated);
+                                          }}
+                                          className="w-1/2 bg-zinc-950/80 border border-zinc-850 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500/20 text-[10px] px-2.5 py-1.5 rounded-lg outline-none text-zinc-300 placeholder-zinc-650 font-mono"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = [...availablePaths];
+                                            const headers = { ...updated[idx].customHeaders };
+                                            delete headers[key];
+                                            updated[idx].customHeaders = headers;
+                                            setAvailablePaths(updated);
+                                          }}
+                                          className="p-1.5 text-zinc-550 hover:text-red-400 hover:bg-zinc-900 rounded transition-colors cursor-pointer shrink-0"
+                                          title="Remove header"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>

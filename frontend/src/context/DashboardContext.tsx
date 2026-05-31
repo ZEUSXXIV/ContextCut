@@ -758,7 +758,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
           isEnabled: true,
           isWritable: ep.method.toLowerCase() !== 'get',
           enableToon: !!ep.enableToon,
-          customDescription: ep.customDescription || ''
+          customDescription: ep.customDescription || '',
+          customHeaders: ep.customHeaders || {}
         }));
 
         const customHeadersMap: Record<string, string> = {};
@@ -1118,7 +1119,8 @@ export const DashboardProvider = ({ children }: { children: React.ReactNode }) =
             description: methodData.summary || '',
             parameters: [...otherParams, ...bodyParams],
             enableToon: pathConfig?.enableToon || false,
-            customDescription: pathConfig?.customDescription || ''
+            customDescription: pathConfig?.customDescription || '',
+            customHeaders: pathConfig?.customHeaders || {}
           });
         });
       });

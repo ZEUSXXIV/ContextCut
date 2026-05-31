@@ -495,6 +495,17 @@ router.post('/:id/test-request', async (req: AuthenticatedRequest, res: Response
       });
     }
 
+    // Resolve path-specific custom headers
+    const pathConfig = api.allowedPaths?.find(
+      (p: any) => p.path === path && p.method.toLowerCase() === method.toLowerCase()
+    );
+    if (pathConfig && pathConfig.customHeaders && typeof pathConfig.customHeaders === 'object') {
+      const pathHeadersObj = pathConfig.customHeaders as Record<string, string>;
+      Object.keys(pathHeadersObj).forEach((k) => {
+        connectionHeaders[k] = pathHeadersObj[k];
+      });
+    }
+
     // Securely decrypt API key / auth credential in-memory
     const secret = await EncryptedSecret.findOne({ connectedApi: api._id });
     if (secret && secret.encryptedData) {

@@ -496,6 +496,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
               const allRequestHeaders = {
                 ...headers,
                 ...staticHeaders,
+                ...(matchedPathConfig.customHeaders || {}),
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
               };
