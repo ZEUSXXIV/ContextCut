@@ -531,12 +531,7 @@ router.post('/message', authenticateApiKey as any, async (req: AuthenticatedRequ
                   url: fullUrl,
                   params: queryArgs,
                   data: Object.keys(bodyArgs).length > 0 ? bodyArgs : undefined,
-                  headers: {
-                    ...headers,
-                    ...staticHeaders,
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                  },
+                  headers: allRequestHeaders,
                   timeout: 15000,
                   validateStatus: () => true, // Resolve all HTTP statuses safely
                 });
