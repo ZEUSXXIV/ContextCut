@@ -17,7 +17,7 @@ export function convertToToon(jsonInput: any): string {
 
   // Helper to format string values according to YAML quoting rules
   function formatString(str: string): string {
-    const needsQuoting = /[:\n\r\t,"]/.test(str);
+    const needsQuoting = /[|:\n\r\t,"]/.test(str);
     if (needsQuoting) {
       // Escape backslashes, double quotes, and control characters inside the string representation
       const escaped = str
@@ -38,6 +38,27 @@ export function convertToToon(jsonInput: any): string {
     if (val === null || val === undefined) return 'N';
     if (typeof val === 'string') return formatString(val);
     return String(val);
+  }
+
+  // Helper to serialize any nested structure in a highly compact, single-line format
+  function serializeCompact(val: any): string {
+    if (isPrimitive(val)) {
+      return formatPrimitive(val);
+    }
+
+    if (Array.isArray(val)) {
+      if (val.length === 0) return '[]';
+      const items = val.map(item => serializeCompact(item)).join('|');
+      return `[${items}]`;
+    }
+
+    const keys = Object.keys(val);
+    if (keys.length === 0) return '{}';
+    const pairs = keys.map(k => {
+      const v = val[k];
+      return `${k}:${serializeCompact(v)}`;
+    }).join('|');
+    return `[${pairs}]`;
   }
 
   // Helper to determine if an array represents tabular objects (i.e. every item is a non-null object and not an array)
@@ -89,8 +110,8 @@ export function convertToToon(jsonInput: any): string {
             if (isPrimitive(propVal)) {
               return formatPrimitive(propVal);
             } else {
-              // Safe fallback for nested complex structures inside tabular columns
-              return JSON.stringify(propVal);
+              // Compact serialization for nested complex structures inside tabular columns
+              return serializeCompact(propVal);
             }
           }).join(',');
         });

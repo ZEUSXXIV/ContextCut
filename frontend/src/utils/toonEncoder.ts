@@ -9,7 +9,7 @@ export function convertToToon(jsonInput: any): string {
   }
 
   function formatString(str: string): string {
-    const needsQuoting = /[:\n\r\t,"]/.test(str);
+    const needsQuoting = /[|:\n\r\t,"]/.test(str);
     if (needsQuoting) {
       const escaped = str
         .replace(/\\/g, '\\\\')
@@ -28,6 +28,26 @@ export function convertToToon(jsonInput: any): string {
     if (val === null || val === undefined) return 'N';
     if (typeof val === 'string') return formatString(val);
     return String(val);
+  }
+
+  function serializeCompact(val: any): string {
+    if (isPrimitive(val)) {
+      return formatPrimitive(val);
+    }
+
+    if (Array.isArray(val)) {
+      if (val.length === 0) return '[]';
+      const items = val.map(item => serializeCompact(item)).join('|');
+      return `[${items}]`;
+    }
+
+    const keys = Object.keys(val);
+    if (keys.length === 0) return '{}';
+    const pairs = keys.map(k => {
+      const v = val[k];
+      return `${k}:${serializeCompact(v)}`;
+    }).join('|');
+    return `[${pairs}]`;
   }
 
   function isTabularArray(arr: any[]): boolean {
@@ -76,7 +96,7 @@ export function convertToToon(jsonInput: any): string {
             if (isPrimitive(propVal)) {
               return formatPrimitive(propVal);
             } else {
-              return JSON.stringify(propVal);
+              return serializeCompact(propVal);
             }
           }).join(',');
         });
