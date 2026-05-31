@@ -27,6 +27,8 @@ graph TD
 *   **🔭 Traceparent Context Propagation**: Fully implements W3C Trace Context propagation. Every proxied execution carries standard `traceparent` headers downstream, enabling complete distributed OpenTelemetry tracking.
 *   **🧠 Advanced AI Telemetry Extraction**: Captures the orchestrating client program identifier (Cursor/Claude Desktop), active AI model (e.g., `claude-3-5-sonnet`), and the exact prompt intent, logging them in database execution traces.
 *   **🛡️ Secure Symmetric Secrets Vault**: Employs AES-256-GCM symmetric encryption for custom headers and authorization keys. Secrets are decrypted solely in-memory at execution, and database trace logs redact sensitive credentials as `[REDACTED]`.
+*   **🔌 Granular Path Custom Headers**: Configure unique headers (like RapidAPI keys/hosts) for specific endpoints individually. Path overrides are saved securely and merged downstream during tool execution, enabling seamless model-driven microservice dispatch.
+*   **⚡ Postman-style Bulk Header Editor**: Paste standard multiline headers directly into endpoint configurations. Automatically tokenizes and parses header lines (e.g. `Key: Value`) in real-time, syncing cleanly with the key-value editor.
 *   **🔒 Multi-Tenant Auth Architecture**: Built with secure, cryptographically signed HTTP-Only Cookie-based sessions, timing-safe password validations, and numeric 6-digit OTP verification flows.
 *   **📊 Premium Glassmorphic Dashboard**: A stunning real-time console with interactive timeline explorer widgets mapping handshake splits, remote API latencies, and payload size reductions.
 

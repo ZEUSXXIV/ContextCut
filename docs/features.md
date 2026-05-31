@@ -69,3 +69,12 @@ Omni Rest-to-MCP is a premium, enterprise-grade, low-overhead Model Context Prot
 * **Tenant Credential Isolation**: Secure multi-tenant architecture ensures developer API keys never bleed or cross boundaries.
 * **Signed Cookie Sessions**: Global `cookie-parser` session enforcement ensures robust authentication guards.
 * **OTP Sign-Up Flow**: Dynamic 6-digit numeric OTP generation, timing-safe `scrypt` hashing, and secure 5-minute auto-expiry rules.
+
+---
+
+## 7. Granular Path-Level Custom Headers & Postman-style Bulk Edit
+* **Endpoint-Specific Custom Headers**: Adds support for configuring unique headers (e.g. `x-rapidapi-host` and `x-rapidapi-key`) for specific endpoints individually.
+* **Reliable Mongoose Dirty-Checking Tracking**: Resolves Mongoose Mixed-type save preservation issues within nested allowedPaths subdocuments. Employs `api.markModified('allowedPaths')` on backend PUT router endpoints to ensure path-level updates are successfully serialized to MongoDB.
+* **Postman-style "⚡ Bulk Edit" Interface**: Renders a dark monospace multiline `<textarea>` paste block next to the "Add Header" button. Tokenizes standard header lines (e.g. `Key: Value`) automatically on the fly, syncing changes with the interactive key-value grid in real-time.
+* **Workspace Auto-Population**: Dynamically auto-populates the Postman REST client's **Headers** tab with the endpoint's configured custom headers when clicked in the sidebar collections tree.
+* **Axios Downstream Proxy Injection**: Integrates headers merging inside the Express SSE proxy (`backend/src/routes/mcp.ts`) to securely decrypted and inject path-specific headers downstream during JSON-RPC tool calls, ensuring perfect model-driven API dispatches.
