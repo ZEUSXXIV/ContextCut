@@ -207,6 +207,43 @@ These endpoints manage hosted connection details. Authenticated session cookies 
   { "message": "Simulated request logged successfully." }
   ```
 
+### 6. REST Proxy Forwarding Test-Request
+* **Route:** `POST /api/gateways/:id/test-request`
+* **Headers:** Cookie: `session_token=...` or Authorization Bearer API Key
+* **Content-Type:** `application/json`
+* **Request Body:**
+  ```json
+  {
+    "path": "/v1/charges",
+    "method": "get",
+    "queryParams": {
+      "limit": 10
+    },
+    "headers": {
+      "x-custom-test-header": "test-value"
+    },
+    "body": {}
+  }
+  ```
+* **Success Response (200 OK):**
+  Decrypts credentials in-memory and merges path-level/connection-level custom headers before executing a real downstream Axios request against the target API.
+  ```json
+  {
+    "status": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "date": "Mon, 01 Jun 2026 09:00:00 GMT"
+    },
+    "data": {
+      "object": "list",
+      "data": []
+    },
+    "latencyMs": 142,
+    "sizeBytes": 482
+  }
+  ```
+
 ---
 
 ## 📊 Analytics Dashboard Routes (`/api/analytics`)
@@ -241,18 +278,25 @@ These endpoints manage hosted connection details. Authenticated session cookies 
 Exposes compliant MCP Servers over standard Server-Sent Events (SSE) persistence.
 
 ### 1. Establish SSE Client Handshake Connection
-* **Route:** `GET /api/mcp/sse?apiKey=omni_gt_...`
+* **Route:** `GET /api/mcp/sse?apiKey=omni_gt_...&gatewayId=...`
 * **Headers Required:** `Accept: text/event-stream`
+* **Query Parameters:**
+  - `apiKey`: Tenant master API Key (`omni_gt_...`)
+  - `gatewayId` (Optional): ID of a specific `ConnectedAPI` database record to enforce gateway isolation.
 * **Behavior:** Binds a persistent unidirectional response channel. Establishes a standard SSE session mapping and fires an initial JSON endpoint connection payload:
   ```event-stream
   event: endpoint
-  data: /api/mcp/message?sessionId=session-abc-1234
+  data: /api/mcp/message?sessionId=session-abc-1234&gatewayId=api-12345
   ```
+  *Note: If `gatewayId` is provided, the SSE session dynamically filters the tools list to only expose endpoints for that specific gateway.*
 
 ### 2. Client JSON-RPC 2.0 Message Gateway
-* **Route:** `POST /api/mcp/message?sessionId=session-abc-1234`
+* **Route:** `POST /api/mcp/message?sessionId=session-abc-1234&gatewayId=...`
 * **Headers Required:** Authorization Bearer API Key (`omni_gt_...`)
+* **Query Parameters:**
+  - `sessionId`: The unique persistent active session ID generated during the SSE handshake.
+  - `gatewayId` (Optional): Limits JSON-RPC operations strictly to the specified gateway context.
 * **JSON-RPC Methods Handled:**
   - **`initialize`**: Resolves the client handshake context.
-  - **`tools/list`**: Dynamically compiles all allowed paths in the spec as compliant flat JSON-Schema tool parameters.
-  - **`tools/call`**: Executes the tool call. Decrypts credentials in-memory, queries the REST API, prunes the payload via the Token-Saver, and streams the pruned context back to the LLM.
+  - **`tools/list`**: Dynamically compiles all allowed paths in the spec as compliant flat JSON-Schema tool parameters. (If filtered by `gatewayId`, only exposes that gateway's allowed paths).
+  - **`tools/call`**: Executes the tool call. Decrypts credentials in-memory, queries the REST API (injecting connection-level and path-level custom headers), prunes the payload via the Token-Saver, and streams the pruned context back to the LLM.

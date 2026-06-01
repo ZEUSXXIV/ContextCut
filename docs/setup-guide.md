@@ -62,15 +62,17 @@ npm test
 ```
 
 ### Expected Output:
-All four test suites containing 18 test assertions must execute and pass:
+All six test suites containing 29 test assertions must execute and pass:
 ```bash
 PASS src/routes/auth.test.ts
 PASS src/routes/mcp.test.ts
+PASS src/routes/apis.test.ts
 PASS src/utils/cryptography.test.ts
 PASS src/utils/tokenSaver.test.ts
+PASS src/utils/toonEncoder.test.ts
 
-Test Suites: 4 passed, 4 total
-Tests:       18 passed, 18 total
+Test Suites: 6 passed, 6 total
+Tests:       29 passed, 29 total
 Snapshots:   0 total
 ```
 *Note: In the test environment, the Express server automatically binds to port `0` to dynamically pick a random ephemeral open port, completely preventing address collisions (`EADDRINUSE`) during parallel or live test runs.*
@@ -119,4 +121,10 @@ If the Express backend (port `3001`) is offline, the Next.js frontend automatica
    - Input `developer@omnimcp.local` and `developer123`.
    - Submit the credentials to transition to the **Segmented OTP Grid**.
    - Type `1`, `2`, `3`, `4`, `5`, `6` in the auto-shifting input boxes. On submitting, you will be successfully authenticated.
-6. **Simulate Traffic:** Once inside, click the **Play** button on Stripe or GitHub API cards to immediately generate request simulations and verify real-time compression ratios and trace logger timelines in the console tracking display.
+6. **Postman-style Request Testing & Client Sandbox:**
+   - Select a connected API connection from the interactive Sidebar Tree in the left panel to expand its endpoints.
+   - Click any endpoint to open an isolated Request Workspace Tab.
+   - Customize the request context: enter query parameters, URL path parameters, and request body variables in their dedicated interactive tabs.
+   - View the automatically populated path-specific custom headers (e.g. `x-rapidapi-key`) or perform bulk editing by pasting lines of `Key: Value` configurations.
+   - Press **"Send"** to dispatch the downstream Axios request securely through the server, decrypting vault credentials on-the-fly.
+   - Inspect the live response: compare raw JSON output directly against the optimized "Token-Saver" JSON output and the custom ultra-compact **TOON (Tabular Object-Oriented Notation)** format side-by-side with dynamic compression savings metrics.

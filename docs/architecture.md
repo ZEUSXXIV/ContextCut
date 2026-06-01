@@ -72,8 +72,20 @@ To run tool executions, the LLM client initializes a Server-Sent Events (SSE) se
          [Execute Recursive Token-Saver Pruning]
                            |
                            v
-        [Stream Compressed JSON-RPC 2.0 to LLM]
+         [Stream Compressed JSON-RPC 2.0 to LLM]
 ```
+
+### 3. W3C Distributed Tracing & Traceparent Propagation
+Omni MCP Gateway fully supports W3C Trace Context propagation inside its Express proxy layers. On every tool call execution request:
+* A unique W3C `traceparent` (e.g. `00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01`) is generated or propagated downstream in outgoing Axios requests.
+* Trace identifiers (`traceId`, `spanId`) are correlated with the active database session and user tenant profiles.
+* Comprehensive model/client metadata—such as the AI model name (`modelName`), client orchestrator program name (`clientName`), and active user prompt (`prompt`)—are parsed from incoming JSON-RPC handshakes/messages and saved directly into the tracing telemetry.
+
+### 4. Gateway-Level Tool Isolation & SSE Filtering
+To ensure strict multi-tenant isolation and granular tool scopes:
+* The gateway supports isolation queries (`&gatewayId=...`) on the SSE endpoint (`/api/mcp/sse`) and JSON-RPC message broker (`/api/mcp/message`).
+* When specified, the SSE connection dynamically restricts the `tools/list` response to expose ONLY the tools associated with that specific gateway ID, instead of exposing all registered APIs for the tenant.
+* Message routing validates ownership of the requested `gatewayId` before permitting the execution of downstream tool calls.
 
 ---
 
@@ -125,14 +137,19 @@ Stores parsed OpenAPI specifications and custom security toggles for hosted endp
     path: String,
     method: String,
     isEnabled: Boolean,
-    isWritable: Boolean   // Controls mutation capability
+    isWritable: Boolean,   // Controls mutation capability
+    enableToon: Boolean,   // Path-level TOON toggle
+    customDescription: String, // Path-level description override
+    customHeaders: Object  // Path-specific header overrides (Mixed)
   }],
   tokenSaverConfig: {
-    maxDepth: Number,
-    maxArrayLength: Number,
-    maxCharCap: Number,
+    maxDepth: Number,      // Recursion limit (default 10)
+    maxArrayLength: Number,// Array item limit (default 50)
+    maxCharCap: Number,    // Hard size limit (default 50,000)
     stripMetadataKeys: [String]
   },
+  customHeaders: Object,   // Global connection-level header mapping (Mixed)
+  enableToonCompression: Boolean, // Connection-level TOON toggle
   timestamps: true
 }
 ```
@@ -159,6 +176,40 @@ Maintains stateful browser login sessions for the Next.js frontend:
   expiresAt: Date,        // Expiration (Time-To-Live index automated)
   userAgent: String,
   ipAddress: String,
+  timestamps: true
+}
+```
+
+### 5. RequestTrace Collection
+Stores low-overhead distributed request traces, latency indicators, and payload telemetry with a sliding 7-day TTL index retention policy:
+```typescript
+{
+  traceId: String,          // W3C Trace ID (indexed)
+  spanId: String,           // W3C Span ID
+  user: ObjectId,           // References the User Collection (indexed)
+  connectedApi: ObjectId,   // References the ConnectedAPI Collection (indexed)
+  toolName: String,         // Invoked JSON-RPC tool name
+  method: String,           // HTTP Method
+  path: String,             // Request URL Path
+  arguments: Object,        // Decrypted JSON-RPC arguments (Mixed)
+  proxyStart: Date,         // Incoming request timestamp (indexed)
+  proxyEnd: Date,           // Outgoing completion timestamp
+  originStart: Date,        // REST dispatch timestamp
+  originEnd: Date,          // REST response timestamp
+  originalResponseSizeBytes: Number, // Raw payload size
+  optimizedResponseSizeBytes: Number,// Pruned size
+  originStatus: Number,     // HTTP status code from downstream API
+  status: String,           // 'SUCCESS' | 'API_ERROR' | 'GATEWAY_ERROR'
+  errorMessage: String,     // Error diagnostics
+  requestHeaders: Object,   // Redacted request headers (Mixed)
+  requestBody: Object,      // Redacted request body (Mixed)
+  requestQuery: Object,     // Redacted request query (Mixed)
+  rawResponseBody: String,  // Raw downstream REST JSON string
+  optimizedResponseBody: String, // Pruned JSON output string
+  toonResponseBody: String, // Pruned TOON output string
+  prompt: String,           // Developer system / user intent prompt
+  modelName: String,        // Invoked AI Model Name (e.g. claude-3.5-sonnet)
+  clientName: String,       // Client orchestrator name (e.g. Cursor, Claude Desktop)
   timestamps: true
 }
 ```

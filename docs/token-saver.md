@@ -35,8 +35,8 @@ The pruning engine evaluates raw JSON responses and enforces five strict archite
                    Removes traceId, x-request-id, requestId
                                        |
                                        v
-                         [Rule 2: Max Depth Constraint]
-                  Replaces objects exceeding depth 4 with tag
+                          [Rule 2: Max Depth Constraint]
+                  Replaces objects exceeding depth 10 with tag
                                        |
                                        v
                        [Rule 3: Array Length Capping]
@@ -60,8 +60,9 @@ Eliminates verbose instrumentation keys, which are highly repetitive and offer z
 
 ### 2. Maximum Hierarchy Depth Capping
 Deeply nested JSON trees represent massive token consumption and are usually overly detailed logs.
-* **Limit:** **4 levels** of object recursion maximum.
-* **Truncation Tag:** If an object nesting level reaches index **5**, it is stripped and replaced with the string representation: `"[Max Depth Reached]"`.
+* **Limit:** **10 levels** of object recursion maximum.
+* **Truncation Tag:** If an object nesting level reaches index **11**, it is stripped and replaced with the string representation: `"[Max Depth Reached]"`.
+* **Array Depth Transparency:** Array traversals themselves are treated as transparent containers and do not increment the current depth counter. However, strict nesting depth tracking does apply to any objects contained within those arrays. This ensures that wrapping an object inside an array does not artificially inflate its recursion depth metrics.
 
 ### 3. Array Length Slicing
 Large lists of repeating objects (e.g. 500 catalog items or charges) quickly exhaust prompt windows.

@@ -38,9 +38,15 @@ rest-to-mcp/
 │   └── src/routes/*.test.ts  # Jest integration and adversarial test files
 │
 ├── frontend/                 # Next.js App Router & Tailwind CSS Dashboard
-│   └── src/app/
-│       ├── page.tsx          # Glassmorphic auth gate, settings panels, and analytics trace list
-│       └── globals.css       # Visual tokens, ambient animations, and custom scrollbars
+│   └── src/
+│       ├── app/              # App Router routes (/login, /register, /verify, /dashboard, /dashboard/connect)
+│       │   ├── globals.css   # Visual tokens, ambient animations, and custom scrollbars
+│       │   ├── layout.tsx    # Root layout and theme/providers setup
+│       │   └── page.tsx      # Main redirection entrypoint
+│       ├── components/       # Premium glassmorphic reusable components (ConnectWizard, LiveRequestTracker, TraceparentModal, GlassCard)
+│       ├── context/          # State providers (DashboardContext.tsx)
+│       ├── hooks/            # Custom hooks (useTabs.ts for tab-workspace management)
+│       └── middleware.ts     # Edge routing guards redirecting unauthenticated users
 │
 ├── dummy-swagger-backend/    # Self-contained Express mock API for integration validation
 │
